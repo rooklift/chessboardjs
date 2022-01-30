@@ -5,15 +5,30 @@ function replace_all(s, search, replace) {
 	return s.split(search).join(replace);
 }
 
-exports.all_squares = [												// Convenient iterable when strings are needed
-	"a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
-	"a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
-	"a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
-	"a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
-	"a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
-	"a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
-	"a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
-	"a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
+const mailbox = [
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1,  0,  1,  2,  3,  4,  5,  6,  7, -1,
+	-1,  8,  9, 10, 11, 12, 13, 14, 15, -1,
+	-1, 16, 17, 18, 19, 20, 21, 22, 23, -1,
+	-1, 24, 25, 26, 27, 28, 29, 30, 31, -1,
+	-1, 32, 33, 34, 35, 36, 37, 38, 39, -1,
+	-1, 40, 41, 42, 43, 44, 45, 46, 47, -1,
+	-1, 48, 49, 50, 51, 52, 53, 54, 55, -1,
+	-1, 56, 57, 58, 59, 60, 61, 62, 63, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+];
+
+const mailbox64 = [
+	21, 22, 23, 24, 25, 26, 27, 28,
+	31, 32, 33, 34, 35, 36, 37, 38,
+	41, 42, 43, 44, 45, 46, 47, 48,
+	51, 52, 53, 54, 55, 56, 57, 58,
+	61, 62, 63, 64, 65, 66, 67, 68,
+	71, 72, 73, 74, 75, 76, 77, 78,
+	81, 82, 83, 84, 85, 86, 87, 88,
+	91, 92, 93, 94, 95, 96, 97, 98,
 ];
 
 exports.new_board = function(state = null, active = "w", castling = "", enpassant = null, halfmove = 0, fullmove = 1) {
@@ -24,18 +39,14 @@ exports.new_board = function(state = null, active = "w", castling = "", enpassan
 		ret.state = Array.from(state);
 	} else {
 		ret.state = [
-			"*", "*", "*", "*", "*", "*", "*", "*", "*", "*",
-			"*", "*", "*", "*", "*", "*", "*", "*", "*", "*",		// www.chessprogramming.org/10x12_Board
-			"*",  "",  "",  "",  "",  "",  "",  "",  "", "*",
-			"*",  "",  "",  "",  "",  "",  "",  "",  "", "*",		// * is a sentinel value indicating off-board
-			"*",  "",  "",  "",  "",  "",  "",  "",  "", "*",
-			"*",  "",  "",  "",  "",  "",  "",  "",  "", "*",
-			"*",  "",  "",  "",  "",  "",  "",  "",  "", "*",
-			"*",  "",  "",  "",  "",  "",  "",  "",  "", "*",
-			"*",  "",  "",  "",  "",  "",  "",  "",  "", "*",
-			"*",  "",  "",  "",  "",  "",  "",  "",  "", "*",
-			"*", "*", "*", "*", "*", "*", "*", "*", "*", "*",
-			"*", "*", "*", "*", "*", "*", "*", "*", "*", "*",
+			"", "", "", "", "", "", "", "",
+			"", "", "", "", "", "", "", "",
+			"", "", "", "", "", "", "", "",
+			"", "", "", "", "", "", "", "",
+			"", "", "", "", "", "", "", "",
+			"", "", "", "", "", "", "", "",
+			"", "", "", "", "", "", "", "",
+			"", "", "", "", "", "", "", "",
 		];
 	}
 
@@ -162,19 +173,19 @@ const board_prototype = {
 	get: function(arg1, arg2) {										// get(2, 3) or get("c6") are equivalent
 		let index;
 		if (typeof(arg1) === "string") {
-			index = (10 - (arg1.charCodeAt(1) - 48)) * 10 + arg1.charCodeAt(0) - 96;
+			index = (arg1.charCodeAt(0) - 97) + ((8 - (arg1.charCodeAt(1) - 48)) * 8);
 		} else {
-			index = (arg2 * 10) + arg1 + 21;
+			index = arg1 + (arg2 * 8);
 		}
 		return this.state[index];
 	},
 
 	set: function(arg1, arg2, arg3) {								// set(2, 3, "R") or set("c6", "R") are equivalent
 		if (typeof(arg1) === "string") {
-			let index = (10 - (arg1.charCodeAt(1) - 48)) * 10 + arg1.charCodeAt(0) - 96;
+			let index = (arg1.charCodeAt(0) - 97) + ((8 - (arg1.charCodeAt(1) - 48)) * 8);
 			this.state[index] = arg2;
 		} else {
-			let index = (arg2 * 10) + arg1 + 21;
+			let index = arg1 + (arg2 * 8);
 			this.state[index] = arg3;
 		}
 	},
@@ -205,6 +216,38 @@ const board_prototype = {
 				}
 			}
 			console.log(s);
+		}
+	},
+
+	find: function(piece, startx, starty, endx, endy) {
+
+		// Find all pieces of the specified type (colour-specific).
+		// Search range is INCLUSIVE. Result returned as a list of points.
+		// You can call this function with just a piece to search the whole board.
+
+		if (startx === undefined) startx = 0;
+		if (starty === undefined) starty = 0;
+		if (endx === undefined) endx = 7;
+		if (endy === undefined) endy = 7;
+
+		// Calling with out of bounds args should also work...
+
+		if (startx < 0) startx = 0;
+		if (startx > 7) startx = 7;
+		if (starty < 0) starty = 0;
+		if (starty > 7) starty = 7;
+		if (endx < 0) endx = 0;
+		if (endx > 7) endx = 7;
+		if (endy < 0) endy = 0;
+		if (endy > 7) endy = 7;
+
+		for (let x = startx; x <= endx; x++) {
+			for (let y = starty; y <= endy; y++) {
+				let index = x + (y * 8);
+				if (this.state[index] === piece) {
+					ret.push([x, y]);
+				}
+			}
 		}
 	},
 
