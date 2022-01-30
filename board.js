@@ -31,6 +31,10 @@ const mailbox64 = [
 	91, 92, 93, 94, 95, 96, 97, 98,
 ];
 
+const cardinal_attacks = [-10, 1, 10, -1];
+const diagonal_attacks = [-11, -9, 11, 9];
+const knight_attacks = [-21, -19, -8, 12, 21, 19, 8, -12];
+
 exports.new_board = function(state = null, active = "w", castling = "", enpassant = null, halfmove = 0, fullmove = 1) {
 
 	let ret = Object.create(board_prototype);
@@ -249,6 +253,119 @@ const board_prototype = {
 				}
 			}
 		}
+	},
+
+	attacked: function(x, y, defender_colour) {
+
+		if (defender_colour !== "w" && defender_colour !== "b") {
+			throw new Error("attacked(): bad call");
+		}
+
+		let index = x + (y * 8);
+		let initial_mail = mailbox64[index];
+
+		for (let attack of cardinal_attacks) {
+
+			let mail = initial_mail;
+			
+			while (true) {
+
+				mail += attack;
+
+				let sq_index = mailbox[mail];
+
+				if (sq_index === -1) {
+					break;
+				}
+
+				let sq_piece = this.state[sq_index];
+
+				if (sq_piece === "") {
+					continue;
+				}
+
+				if (defender_colour === "w") {
+					if (sq_piece === "k" || sq_piece === "q" || sq_piece === "r") {
+						return true;
+					}
+				} else {
+					if (sq_piece === "K" || sq_piece === "Q" || sq_piece === "R") {
+						return true;
+					}
+				}
+
+				break;
+			}
+		}
+
+		for (let attack of diagonal_attacks) {
+
+			let mail = initial_mail;
+			
+			while (true) {
+
+				mail += attack;
+
+				let sq_index = mailbox[mail];
+
+				if (sq_index === -1) {
+					break;
+				}
+
+				let sq_piece = this.state[sq_index];
+
+				if (sq_piece === "") {
+					continue;
+				}
+
+				if (defender_colour === "w") {
+					if (sq_piece === "k" || sq_piece === "q" || sq_piece === "b") {
+						return true;
+					}
+					if (sq_piece === "p") {
+						if (mail - initial_mail === -9 || mail - initial_mail === -11) {
+							return true;
+						}
+					}
+				} else {
+					if (sq_piece === "K" || sq_piece === "Q" || sq_piece === "B") {
+						return true;
+					}
+					if (sq_piece === "P") {
+						if (mail - initial_mail === 9 || mail - initial_mail === 11) {
+							return true;
+						}
+					}
+				}
+
+				break;
+			}
+		}
+
+		for (let attack of knight_attacks) {		// Rather different logic, careful...
+
+			let mail = initial_mail + attack;
+
+			let sq_index = mailbox[mail];
+
+			if (sq_index === -1) {
+				continue;
+			}
+
+			let sq_piece = this.state[sq_index];
+
+			if (defender_colour === "w") {
+				if (sq_piece === "n") {
+					return true;
+				}
+			} else {
+				if (sq_piece === "N") {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	},
 
 };
