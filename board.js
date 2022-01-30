@@ -265,25 +265,17 @@ const board_prototype = {
 		let initial_mail = mailbox64[index];
 
 		for (let attack of cardinal_attacks) {
-
 			let mail = initial_mail;
-			
 			while (true) {
-
 				mail += attack;
-
 				let sq_index = mailbox[mail];
-
 				if (sq_index === -1) {
 					break;
 				}
-
 				let sq_piece = this.state[sq_index];
-
 				if (sq_piece === "") {
 					continue;
 				}
-
 				if (defender_colour === "w") {
 					if (sq_piece === "k" || sq_piece === "q" || sq_piece === "r") {
 						return true;
@@ -293,31 +285,22 @@ const board_prototype = {
 						return true;
 					}
 				}
-
 				break;
 			}
 		}
 
 		for (let attack of diagonal_attacks) {
-
 			let mail = initial_mail;
-			
 			while (true) {
-
 				mail += attack;
-
 				let sq_index = mailbox[mail];
-
 				if (sq_index === -1) {
 					break;
 				}
-
 				let sq_piece = this.state[sq_index];
-
 				if (sq_piece === "") {
 					continue;
 				}
-
 				if (defender_colour === "w") {
 					if (sq_piece === "k" || sq_piece === "q" || sq_piece === "b") {
 						return true;
@@ -337,23 +320,17 @@ const board_prototype = {
 						}
 					}
 				}
-
 				break;
 			}
 		}
 
 		for (let attack of knight_attacks) {		// Rather different logic, careful...
-
 			let mail = initial_mail + attack;
-
 			let sq_index = mailbox[mail];
-
 			if (sq_index === -1) {
 				continue;
 			}
-
 			let sq_piece = this.state[sq_index];
-
 			if (defender_colour === "w") {
 				if (sq_piece === "n") {
 					return true;
