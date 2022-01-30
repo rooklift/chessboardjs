@@ -209,19 +209,23 @@ const board_prototype = {
 		throw new Error("Bad piece");
 	},
 
-	dump: function() {
+	graphic: function() {
+		let units = [];
 		for (let y = 0; y < 8; y++) {
-			let s = "";
+			units.push("\n");
 			for (let x = 0; x < 8; x++) {
-				let c = this.get(x, y);
-				if (c) {
-					s += " " + c;
-				} else {
-					s += " .";
+				units.push(this.get(x, y) === "" ? "." : this.get(x, y));
+				if (x < 7) {
+					units.push(" ");
 				}
 			}
-			console.log(s);
+			if (y === 7) {
+				units.push("  ");
+				units.push(this.fen());
+			}
 		}
+		units.push("\n");
+		return units.join("");
 	},
 
 	find: function(piece, startx, starty, endx, endy) {
@@ -353,7 +357,7 @@ const board_prototype = {
 		return false;
 	},
 
-	fen: function() {
+	fen: function(friendly_flag = false) {
 
 		let s = "";
 		let blanks = 0;
@@ -384,7 +388,32 @@ const board_prototype = {
 		let ep_string = this.enpassant ? this.enpassant.s : "-";
 		let castling_string = this.castling !== "" ? this.castling : "-";
 
+		// While interally (and when sending to the engine) we always use Chess960 format,
+		// we can return a more friendly FEN if asked (and if the position is normal Chess).
+		// Relies on our normalchess flag being accurate... (potential for bugs there).
+
+		if (friendly_flag && this.normalchess && castling_string !== "-") {
+			let new_castling_string = "";
+			if (castling_string.includes("H")) new_castling_string += "K";
+			if (castling_string.includes("A")) new_castling_string += "Q";
+			if (castling_string.includes("h")) new_castling_string += "k";
+			if (castling_string.includes("a")) new_castling_string += "q";
+			castling_string = new_castling_string;
+		}
+
 		return s + ` ${this.active} ${castling_string} ${ep_string} ${this.halfmove} ${this.fullmove}`;
+	},
+
+	compare: function(other) {
+		if (this.active !== other.active) return false;
+		if (this.castling !== other.castling) return false;
+		if (this.enpassant !== other.enpassant) return false;		// FIXME? Issues around fake e.p. squares.
+		for (let i = 0; i < 64; i++) {
+			if (this.state[i] !== other.state[i]) {
+				return false;
+			}
+		}
+		return true;
 	},
 
 };
