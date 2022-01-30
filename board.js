@@ -150,14 +150,14 @@ exports.new_board_from_fen = function(fen) {
 	if (white_kings !== 1 || black_kings !== 1) {
 		throw "Invalid FEN - number of kings";
 	}
-/*
-	let opponent_king_char = ret.active === "w" ? "k" : "K";
-	let opponent_king_square = ret.find(opponent_king_char)[0];
 
-	if (ret.attacked(opponent_king_square, ret.colour(opponent_king_square))) {
+	let opponent_king_char = ret.active === "w" ? "k" : "K";
+	let [opponent_king_x, opponent_king_y] = ret.find(opponent_king_char)[0];
+
+	if (ret.attacked(opponent_king_x, opponent_king_y, ret.colour(opponent_king_x, opponent_king_y))) {
 		throw new Error("Invalid FEN - non-mover's king in check");
 	}
-
+/*
 	// Some hard things. Do these in the right order!
 
 	ret.castling = CastlingRights(ret, tokens[2]);
@@ -205,7 +205,7 @@ const board_prototype = {
 		if (piece === "k" || piece === "q" || piece === "r" || piece === "b" || piece === "n" || piece === "p") {
 			return "b";
 		}
-		throw new Error("Bad piece");
+		throw new Error("Bad piece: " + piece);
 	},
 
 	dump: function() {
@@ -245,6 +245,8 @@ const board_prototype = {
 		if (endy < 0) endy = 0;
 		if (endy > 7) endy = 7;
 
+		let ret = [];
+
 		for (let x = startx; x <= endx; x++) {
 			for (let y = starty; y <= endy; y++) {
 				let index = x + (y * 8);
@@ -253,6 +255,8 @@ const board_prototype = {
 				}
 			}
 		}
+
+		return ret;
 	},
 
 	attacked: function(x, y, defender_colour) {
