@@ -353,4 +353,38 @@ const board_prototype = {
 		return false;
 	},
 
+	fen: function() {
+
+		let s = "";
+		let blanks = 0;
+
+		for (let i = 0; i < 64; i++) {
+			if (this.state[i] === "") {
+				blanks++;
+			} else {
+				if (blanks > 0) {
+					s += blanks.toString();
+					blanks = 0;
+				}
+				s += this.state[i];
+			}
+			if (i % 8 === 7) {
+				if (blanks > 0) {
+					s += blanks.toString();
+					blanks = 0;
+				}
+				if (i !== 63) {
+					s += "/";
+				}
+			}
+		}
+
+		// FIXME: possibly implement friendly and book modes.
+
+		let ep_string = this.enpassant ? this.enpassant.s : "-";
+		let castling_string = this.castling !== "" ? this.castling : "-";
+
+		return s + ` ${this.active} ${castling_string} ${ep_string} ${this.halfmove} ${this.fullmove}`;
+	},
+
 };
