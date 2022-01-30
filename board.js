@@ -206,7 +206,7 @@ const board_prototype = {
 		if (piece === "k" || piece === "q" || piece === "r" || piece === "b" || piece === "n" || piece === "p") {
 			return "b";
 		}
-		throw new Error("Bad piece: " + piece);
+		throw new Error("Bad piece");
 	},
 
 	dump: function() {
