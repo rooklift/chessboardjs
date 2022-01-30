@@ -154,7 +154,7 @@ exports.new_board_from_fen = function(fen) {
 	let opponent_king_char = ret.active === "w" ? "k" : "K";
 	let [opponent_king_x, opponent_king_y] = ret.find(opponent_king_char)[0];
 
-	if (ret.attacked(opponent_king_x, opponent_king_y, ret.colour(opponent_king_x, opponent_king_y))) {
+	if (ret.attacked(ret.colour(opponent_king_x, opponent_king_y), opponent_king_x, opponent_king_y)) {
 		throw new Error("Invalid FEN - non-mover's king in check");
 	}
 /*
@@ -259,13 +259,19 @@ const board_prototype = {
 		return ret;
 	},
 
-	attacked: function(x, y, defender_colour) {
+	attacked: function(defender_colour, arg1, arg2) {
 
 		if (defender_colour !== "w" && defender_colour !== "b") {
 			throw new Error("attacked(): bad call");
 		}
 
-		let index = x + (y * 8);
+		let index;
+		if (typeof(arg1) === "string") {
+			index = (arg1.charCodeAt(0) - 97) + ((8 - (arg1.charCodeAt(1) - 48)) * 8);
+		} else {
+			index = arg1 + (arg2 * 8);
+		}
+
 		let initial_mail = mailbox64[index];
 
 		for (let attack of cardinal_attacks) {
