@@ -35,7 +35,7 @@ const cardinal_attacks = [-10, 1, 10, -1];
 const diagonal_attacks = [-11, -9, 11, 9];
 const knight_attacks = [-21, -19, -8, 12, 21, 19, 8, -12];
 
-exports.new_board = function(state = null, active = "w", castling = "", enpassant = null, halfmove = 0, fullmove = 1) {
+exports.new_board = function(state = null, active = "w", castling = "", enpassant = null, halfmove = 0, fullmove = 1, normalchess = false) {
 
 	let ret = Object.create(board_prototype);
 
@@ -59,6 +59,7 @@ exports.new_board = function(state = null, active = "w", castling = "", enpassan
 	ret.enpassant = enpassant;
 	ret.halfmove = halfmove;
 	ret.fullmove = fullmove;
+	ret.normalchess = normalchess;
 
 	return ret;
 }
@@ -154,7 +155,7 @@ exports.new_board_from_fen = function(fen) {
 	let opponent_king_char = ret.active === "w" ? "k" : "K";
 	let [opponent_king_x, opponent_king_y] = ret.find(opponent_king_char)[0];
 
-	if (ret.attacked(ret.colour(opponent_king_x, opponent_king_y), opponent_king_x, opponent_king_y)) {
+	if (ret.attacked(ret.active === "w" ? "b" : "w", opponent_king_x, opponent_king_y)) {
 		throw new Error("Invalid FEN - non-mover's king in check");
 	}
 /*
@@ -171,7 +172,7 @@ exports.new_board_from_fen = function(fen) {
 const board_prototype = {
 
 	copy: function() {
-		return new_board(this.state, this.active, this.castling, this.enpassant, this.halfmove, this.fullmove);
+		return new_board(this.state, this.active, this.castling, this.enpassant, this.halfmove, this.fullmove, this.normalchess);
 	},
 
 	get: function(arg1, arg2) {										// get(2, 3) or get("c6") are equivalent
