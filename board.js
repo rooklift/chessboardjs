@@ -342,14 +342,11 @@ const board_prototype = {
 				continue;
 			}
 			let sq_piece = this.state[sq_index];
-			if (defender_colour === "w") {
-				if (sq_piece === "n") {
-					return true;
-				}
-			} else {
-				if (sq_piece === "N") {
-					return true;
-				}
+			if (sq_piece === "n" && defender_colour === "w") {
+				return true;
+			}
+			if (sq_piece === "N" && defender_colour === "b") {
+				return true;
 			}
 		}
 
