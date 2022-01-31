@@ -36,11 +36,10 @@ let perft_known_values = {
 
 exports.Perft = function(fen, depth) {
 	if (!fen || !depth) throw "Need FEN and depth";
-	// let starttime = performance.now();
+	let starttime = new Date();
 	let board = boardjs.new_board_from_fen(fen);
 	let val = perft(board, depth, true);
-	// console.log(`Total.......... ${val} (${((performance.now() - starttime) / 1000).toFixed(1)} seconds)`);
-	console.log(`Total.......... ${val}`);
+	console.log(`Total.......... ${val} (${((new Date() - starttime) / 1000).toFixed(1)} seconds)`);
 	if (perft_known_values[fen] && perft_known_values[fen][depth]) {
 		if (perft_known_values[fen][depth] === val) {
 			console.log("Known good result");
