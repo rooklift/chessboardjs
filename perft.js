@@ -5,6 +5,11 @@ let boardjs = require("./board");
 function perft(pos, depth, print_moves) {
 	let moves = pos.movegen();
 	if (depth === 1) {
+		if (print_moves) {
+			for (let mv of moves) {
+				perft_print_move(pos, mv, 1);
+			}
+		}
 		return moves.length;
 	} else {
 		let count = 0;
