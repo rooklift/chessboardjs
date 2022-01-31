@@ -423,8 +423,7 @@ function castling_rights(board, s) {					// s is the castling string from a FEN
 
 		for (let ch of s) {
 			if (["A", "B", "C", "D", "E", "F", "G", "H"].includes(ch)) {
-				let p = ch.toLowerCase() + "1";
-				if (board.get(p) === "R") {
+				if (board.get(ch.toLowerCase() + "1") === "R") {
 					dict[ch] = true;
 				}
 			}
@@ -469,8 +468,7 @@ function castling_rights(board, s) {					// s is the castling string from a FEN
 
 		for (let ch of s) {
 			if (["a", "b", "c", "d", "e", "f", "g", "h"].includes(ch)) {
-				let p = ch + "8";
-				if (board.get(p) === "r") {
+				if (board.get(ch + "8") === "r") {
 					dict[ch] = true;
 				}
 			}
