@@ -85,20 +85,6 @@ const board_prototype = {
 		this.state[index] = c;
 	},
 
-	colour: function(arg1, arg2) {
-		let piece = this.get(arg1, arg2);
-		if (piece === "") {
-			return "";
-		}
-		if (piece === "K" || piece === "Q" || piece === "R" || piece === "B" || piece === "N" || piece === "P") {
-			return "w";
-		}
-		if (piece === "k" || piece === "q" || piece === "r" || piece === "b" || piece === "n" || piece === "p") {
-			return "b";
-		}
-		throw new Error("Bad piece");
-	},
-
 	graphic: function() {
 		let units = [];
 		for (let y = 0; y < 8; y++) {
