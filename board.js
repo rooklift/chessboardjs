@@ -660,7 +660,7 @@ const board_prototype = {
 		if (this.active === "w") {
 			x1y1 = this.find("K", 0, 7, 7, 7)[0];
 		} else {
-			x1y1 = this.find("k", 0, 7, 7, 7)[0];
+			x1y1 = this.find("k", 0, 0, 7, 0)[0];
 		}
 
 		if (!x1y1) {
@@ -732,7 +732,7 @@ const board_prototype = {
 
 		for (let i = 0; i < 64; i++) {
 			if (this.state[i] === (opp_king)) {
-				if (this.attacked(opp_colour, i_to_s(i))) {
+				if (this.attacked(opp_colour, ...i_to_xy(i))) {
 					return true;
 				} else {
 					return false;
