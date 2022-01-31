@@ -5,6 +5,14 @@ function replace_all(s, search, replace) {
 	return s.split(search).join(replace);
 }
 
+function index_from_args(arg1, arg2) {								// For the normal len-64 arrays
+	if (typeof(arg1) === "string") {
+		return (arg1.charCodeAt(0) - 97) + ((8 - (arg1.charCodeAt(1) - 48)) * 8);
+	} else {
+		return arg1 + (arg2 * 8);
+	}
+}
+
 const mailbox = [
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -121,7 +129,7 @@ exports.new_board_from_fen = function(fen) {
 			}
 
 			if (["K", "k", "Q", "q", "R", "r", "B", "b", "N", "n", "P", "p"].includes(c)) {
-				ret.set(x, y, c);
+				ret.set(c, x, y);
 				x++;
 				if (c === "K") white_kings++;
 				if (c === "k") black_kings++;
@@ -158,10 +166,11 @@ exports.new_board_from_fen = function(fen) {
 	if (ret.attacked(ret.active === "w" ? "b" : "w", opponent_king_x, opponent_king_y)) {
 		throw new Error("Invalid FEN - non-mover's king in check");
 	}
-/*
+
 	// Some hard things. Do these in the right order!
 
-	ret.castling = CastlingRights(ret, tokens[2]);
+	ret.castling = castling_rights(ret, tokens[2]);
+/*
 	ret.enpassant = EnPassantSquare(ret, tokens[3]);	// Requires ret.active to be correct.
 	ret.normalchess = IsNormalChessPosition(ret);		// Requires ret.castling to be correct.
 */
@@ -176,23 +185,13 @@ const board_prototype = {
 	},
 
 	get: function(arg1, arg2) {										// get(2, 3) or get("c6") are equivalent
-		let index;
-		if (typeof(arg1) === "string") {
-			index = (arg1.charCodeAt(0) - 97) + ((8 - (arg1.charCodeAt(1) - 48)) * 8);
-		} else {
-			index = arg1 + (arg2 * 8);
-		}
+		let index = index_from_args(arg1, arg2);
 		return this.state[index];
 	},
 
-	set: function(arg1, arg2, arg3) {								// set(2, 3, "R") or set("c6", "R") are equivalent
-		if (typeof(arg1) === "string") {
-			let index = (arg1.charCodeAt(0) - 97) + ((8 - (arg1.charCodeAt(1) - 48)) * 8);
-			this.state[index] = arg2;
-		} else {
-			let index = arg1 + (arg2 * 8);
-			this.state[index] = arg3;
-		}
+	set: function(c, arg1, arg2) {									// set("R", 2, 3) or set("R", "c6") are equivalent
+		let index = index_from_args(arg1, arg2);
+		this.state[index] = c;
 	},
 
 	colour: function(arg1, arg2) {
@@ -270,13 +269,7 @@ const board_prototype = {
 			throw new Error("attacked(): bad call");
 		}
 
-		let index;
-		if (typeof(arg1) === "string") {
-			index = (arg1.charCodeAt(0) - 97) + ((8 - (arg1.charCodeAt(1) - 48)) * 8);
-		} else {
-			index = arg1 + (arg2 * 8);
-		}
-
+		let index = index_from_args(arg1, arg2);
 		let initial_mail = mailbox64[index];
 
 		for (let attack of cardinal_attacks) {
@@ -417,3 +410,113 @@ const board_prototype = {
 	},
 
 };
+
+function castling_rights(board, s) {					// s is the castling string from a FEN
+
+	let dict = Object.create(null);						// Will contain keys like "A" to "H" and "a" to "h"
+
+	// WHITE
+
+	let wk_location = board.find("K", 0, 7, 7, 7)[0];	// Will be undefined if not on back rank.
+
+	if (wk_location) {
+
+		for (let ch of s) {
+			if (["A", "B", "C", "D", "E", "F", "G", "H"].includes(ch)) {
+				let p = ch.toLowerCase() + "1";
+				if (board.get(p) === "R") {
+					dict[ch] = true;
+				}
+			}
+			if (ch === "Q") {
+				if (board.get("a1") === "R") {			// Compatibility with regular Chess FEN.
+					dict.A = true;
+				} else {
+					for (let col of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
+						let piece = board.get(col + "1");
+						if (piece === "K") {
+							break;
+						}
+						if (piece === "R") {
+							dict[col.toUpperCase()] = true;
+						}
+					}	
+				}
+			}
+			if (ch === "K") {
+				if (board.get("h1") === "R") {			// Compatibility with regular Chess FEN.
+					dict.H = true;
+				} else {
+					for (let col of ["h", "g", "f", "e", "d", "c", "b", "a"]) {
+						let piece = board.get(col + "1");
+						if (piece === "K") {
+							break;
+						}
+						if (piece === "R") {
+							dict[col.toUpperCase()] = true;
+						}
+					}	
+				}
+			}
+		}
+	}
+
+	// BLACK
+
+	let bk_location = board.find("k", 0, 0, 7, 0)[0];
+
+	if (bk_location) {
+
+		for (let ch of s) {
+			if (["a", "b", "c", "d", "e", "f", "g", "h"].includes(ch)) {
+				let p = ch + "8";
+				if (board.get(p) === "r") {
+					dict[ch] = true;
+				}
+			}
+			if (ch === "q") {
+				if (board.get("a8") === "r") {			// Compatibility with regular Chess FEN.
+					dict.a = true;
+				} else {
+					for (let col of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
+						let piece = board.get(col + "8");
+						if (piece === "k") {
+							break;
+						}
+						if (piece === "r") {
+							dict[col] = true;
+						}
+					}	
+				}
+			}
+			if (ch === "k") {
+				if (board.get("h8") === "r") {			// Compatibility with regular Chess FEN.
+					dict.h = true;
+				} else {
+					for (let col of ["h", "g", "f", "e", "d", "c", "b", "a"]) {
+						let piece = board.get(col + "8");
+						if (piece === "k") {
+							break;
+						}
+						if (piece === "r") {
+							dict[col] = true;
+						}
+					}	
+				}
+			}
+		}
+	}
+
+	let ret = "";
+
+	for (let ch of "ABCDEFGHabcdefgh") {
+		if (dict[ch]) {
+			ret += ch;
+		}
+	}
+
+	return ret;
+
+	// FIXME: check at most 1 castling possibility on left and right of each king?
+	// At the moment we support more arbitrary castling rights, maybe that's OK.
+}
