@@ -10,11 +10,11 @@ let perft_known_values = {
 	"r3k2r/1P1pp1P1/8/2P2P2/2p2p2/8/1p1PP1p1/R3K2R w KQkq - 0 1":             [0, 43, 1286, 39109, 1134150,  33406158],
 };
 
-exports.Perft = function(fen, depth) {
+exports.perft = function(fen, depth) {
 	if (!fen || !depth) throw "Need FEN and depth";
 	let starttime = new Date();
 	let board = boardjs.new_board_from_fen(fen);
-	let val = perft(board, depth, true);
+	let val = perft_recurse(board, depth, true);
 	console.log(`Total.......... ${val} (${((new Date() - starttime) / 1000).toFixed(1)} seconds)`);
 	if (perft_known_values[fen] && perft_known_values[fen][depth]) {
 		if (perft_known_values[fen][depth] === val) {
@@ -26,7 +26,7 @@ exports.Perft = function(fen, depth) {
 	return val;
 }
 
-function perft(pos, depth, print_moves) {
+function perft_recurse(pos, depth, print_moves) {
 	let moves = pos.movegen();
 	if (depth === 1) {
 		if (print_moves) {
@@ -38,7 +38,7 @@ function perft(pos, depth, print_moves) {
 	} else {
 		let count = 0;
 		for (let mv of moves) {
-			let val = perft(pos.move(mv), depth - 1, false);
+			let val = perft_recurse(pos.move(mv), depth - 1, false);
 			if (print_moves) {
 				perft_print_move(pos, mv, val);
 			}
