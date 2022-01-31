@@ -30,7 +30,7 @@ const cardinal_attacks = [-10, 1, 10, -1];
 const diagonal_attacks = [-11, -9, 11, 9];
 const knight_attacks = [-21, -19, -8, 12, 21, 19, 8, -12];
 
-exports.new_board = function(state = null, active = "w", castling = "", enpassant = null, halfmove = 0, fullmove = 1, normalchess = false) {
+function new_board(state = null, active = "w", castling = "", enpassant = null, halfmove = 0, fullmove = 1, normalchess = false) {
 
 	let ret = Object.create(board_prototype);
 
@@ -65,7 +65,7 @@ exports.new_board_from_fen = function(fen) {
 		throw new Error("Invalid FEN - size");
 	}
 
-	let ret = exports.new_board();
+	let ret = new_board();
 
 	fen = replace_all(fen, "\t", " ");
 	fen = replace_all(fen, "\n", " ");
@@ -364,7 +364,7 @@ const board_prototype = {
 
 		// FIXME: possibly implement friendly and book modes.
 
-		let ep_string = this.enpassant ? this.enpassant.s : "-";
+		let ep_string = this.enpassant ? this.enpassant : "-";
 		let castling_string = this.castling !== "" ? this.castling : "-";
 
 		// While interally (and when sending to the engine) we always use Chess960 format,
@@ -395,7 +395,161 @@ const board_prototype = {
 		return true;
 	},
 
+	move: function(s) {
+
+		// s is some valid UCI move like "d1f3" or "e7e8q". For the most part, this function
+		// assumes the move is legal - all sorts of weird things can happen if this isn't so.
+
+		// Note castling must be given as king-to-rook e.g. e1h1
+
+		let source = s.slice(0, 2);											// e.g. "e1"
+		let target = s.slice(2, 4);
+		let [x1, y1] = s_to_xy(source);										// e.g. [4, 7]
+		let [x2, y2] = s_to_xy(target);
+		let source_piece = this.get(x1, y1);
+		let target_piece = this.get(x2, y2);
+		let promotion_char = (s.length > 4) ? s[4].toLowerCase() : "q";		// But caller shouldn't send promotion move without promotion char. Hmm.
+
+		let ret = this.copy();
+
+		let pawn_flag = source_piece === "P" || source_piece === "p";
+		let castle_flag = (source_piece === "K" && target_piece === "R") || (source_piece === "k" && target_piece === "r");
+		let capture_flag = !castle_flag && target_piece !== "";
+
+		if (pawn_flag && x1 !== x2) {										// The above test for captures doesn't catch e.p captures, so...
+			capture_flag = true;
+		}
+
+		// Update castling...
+
+		if (source_piece === "K" && y1 === 7) {
+			ret.__delete_white_castling();
+		}
+
+		if (source_piece === "k" && y1 === 0) {
+			ret.__delete_black_castling();
+		}
+
+		if (source_piece === "R" && y1 === 7) {
+			ret.__delete_castling_char(source[0].toUpperCase())
+		}
+
+		if (source_piece === "r" && y1 === 0) {
+			ret.__delete_castling_char(source[0]);
+		}
+
+		if (target_piece === "R" && y2 === 7) {
+			ret.__delete_castling_char(target[0].toUpperCase())
+		}
+
+		if (target_piece === "r" && y2 === 0) {
+			ret.__delete_castling_char(target[0])
+		}
+
+		// Update move counters...
+
+		if (this.active === "b") {
+			ret.fullmove++;
+		}
+
+		if (pawn_flag || capture_flag) {
+			ret.halfmove = 0;
+		} else {
+			ret.halfmove++;
+		}
+
+		// Handle the moves of castling...
+
+		if (castle_flag) {
+			ret.set("", x1, y1);
+			ret.set("", x2, y2);
+			if (x2 > x1) {
+				ret.set(source_piece, 6, y1);
+				ret.set(target_piece, 5, y1);
+			} else {
+				ret.set(source_piece, 2, y1);
+				ret.set(target_piece, 3, y1);
+			}
+		}
+
+		// Delete e.p. captured pawn...
+
+		if (pawn_flag && capture_flag && target_piece === "") {
+			ret.set("", x2, y1);
+		}
+
+		// Set the enpassant square... only if potential capturing pawns are present.
+
+		ret.enpassant = null;
+
+		if (pawn_flag && y1 === 6 && y2 === 4) {		// White pawn advanced 2
+			if ((x1 > 0 && ret.get(x1 - 1, 4) === "p") || (x1 < 7 && ret.get(x1 + 1, 4) === "p")) {
+				ret.enpassant = xy_to_s(x1, 5);
+			}
+		}
+
+		if (pawn_flag && y1 === 1 && y2 === 3) {		// Black pawn advanced 2
+			if ((x1 > 0 && ret.get(x1 - 1, 3) === "P") || (x1 < 7 && ret.get(x1 + 1, 3) === "P")) {
+				ret.enpassant = xy_to_s(x1, 2);
+			}
+		}
+
+		// Actually make the move (except we already did castling)...
+
+		if (!castle_flag) {
+			ret.set(ret.get(x1, y1), x2, y2);
+			ret.set("", x1, y1);
+		}
+
+		// Handle promotions...
+
+		if (y2 === 0 && pawn_flag) {
+			ret.set(promotion_char.toUpperCase(), x2, y2);
+		}
+
+		if (y2 === 7 && pawn_flag) {
+			ret.set(promotion_char.toLowerCase(), x2, y2);
+		}
+
+		// Swap active...
+
+		ret.active = this.active === "w" ? "b" : "w";
+		return ret;
+	},
+
+	__delete_castling_char: function(delete_char) {
+		let new_rights = "";
+		for (let ch of this.castling) {
+			if (ch !== delete_char) {
+				new_rights += ch;
+			}
+		}
+		this.castling = new_rights;
+	},
+
+	__delete_white_castling: function() {
+		let new_rights = "";
+		for (let ch of this.castling) {
+			if ("a" <= ch && ch <= "h") {		// i.e. black survives
+				new_rights += ch;
+			}
+		}
+		this.castling = new_rights;
+	},
+
+	__delete_black_castling: function() {
+		let new_rights = "";
+		for (let ch of this.castling) {
+			if ("A" <= ch && ch <= "H") {		// i.e. white survives
+				new_rights += ch;
+			}
+		}
+		this.castling = new_rights;
+	},
+
 };
+
+
 
 function replace_all(s, search, replace) {
 	if (!s.includes(search)) return s;								// Seems to improve speed overall
@@ -404,10 +558,39 @@ function replace_all(s, search, replace) {
 
 function index_from_args(arg1, arg2) {								// For the normal len-64 arrays
 	if (typeof(arg1) === "string") {
-		return (arg1.charCodeAt(0) - 97) + ((8 - (arg1.charCodeAt(1) - 48)) * 8);
+		let a = arg1.charCodeAt(0);
+		let b = arg1.charCodeAt(1);
+		return (a - 97) + ((56 - b) * 8);
 	} else {
 		return arg1 + (arg2 * 8);
 	}
+}
+
+function valid_coord(s) {
+	if (s.length !== 2) {
+		return false;
+	}
+	let a = s.charCodeAt(0);
+	if (a < 97 || a > 104) {
+		return false;
+	}
+	let b = s.charCodeAt(1);
+	if (b < 49 || b > 56) {
+		return false;
+	}
+	return true;
+}
+
+function s_to_xy(s) {
+	let x = s.charCodeAt(0) - 97;
+	let y = 56 - s.charCodeAt(1);
+	return [x, y];
+}
+
+function xy_to_s(x, y) {
+	let xs = String.fromCharCode(x + 97);
+	let ys = String.fromCharCode((8 - y) + 48);
+	return xs + ys;
 }
 
 function castling_rights(board, s) {					// s is the castling string from a FEN
