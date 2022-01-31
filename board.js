@@ -157,10 +157,9 @@ exports.new_board_from_fen = function(fen) {
 	// Some hard things. Do these in the right order!
 
 	ret.castling = castling_rights(ret, tokens[2]);
-	ret.enpassant = fen_passant_square(ret, tokens[3]);
-/*
-	ret.normalchess = IsNormalChessPosition(ret);					// Requires ret.castling to be correct.
-*/
+	ret.enpassant = fen_passant_square(ret, tokens[3]);				// Requires ret.active to be correct. (FIXME / TODO, see below).
+	ret.normalchess = is_normal_chess(ret);							// Requires ret.castling to be correct.
+
 	return ret;
 }
 
@@ -525,4 +524,29 @@ function fen_passant_square(board, s) {				// FIXME / TODO
 	} else {
 		return null;
 	}
+}
+
+function is_normal_chess(board) {
+
+	for (let ch of "bcdefgBCDEFG") {
+		if (board.castling.includes(ch)) {
+			return false;
+		}
+	}
+
+	if (board.castling.includes("A") || board.castling.includes("H")) {
+		if (board.get("e1") !== "K") {
+			return false;
+		}
+	}
+
+	if (board.castling.includes("a") || board.castling.includes("h")) {
+		if (board.get("e8") !== "k") {
+			return false;
+		}
+	}
+
+	// So it can be considered a normal Chess position.
+
+	return true;
 }
