@@ -472,11 +472,18 @@ const board_prototype = {
 
 			let initial_mail = mailbox64[i];
 
-			if (["Q","q","R","r","B","b"].includes(piece)) {
+			if (piece !== "P" && piece !== "p") {
 
-				let attack_array = queen_attacks;
-				if (piece === "R" || piece === "r") attack_array = rook_attacks;
-				if (piece === "B" || piece === "b") attack_array = bishop_attacks;
+				let attack_array;
+				let fast_break = false;
+
+				switch (piece) {
+					case "K": case "k": attack_array = king_attacks; fast_break = true; break;
+					case "Q": case "q": attack_array = queen_attacks; break;
+					case "R": case "r": attack_array = rook_attacks; break;
+					case "B": case "b": attack_array = bishop_attacks; break;
+					case "N": case "n": attack_array = knight_attacks; fast_break = true; break;
+				}
 
 				for (let attack of attack_array) {
 					let mail = initial_mail;
@@ -489,7 +496,9 @@ const board_prototype = {
 						let sq_piece = this.state[sq_index];
 						if (this.state[sq_index] === "") {						// Moving to empty
 							ret.push(i_to_s(i) + i_to_s(sq_index));
-							continue;
+							if (fast_break) {
+								break;
+							}
 						} else if (movers.includes(this.state[sq_index])) {		// Blocked by friendly
 							break;
 						} else {												// Capture
@@ -498,28 +507,8 @@ const board_prototype = {
 						}
 					}
 				}
-			}
 
-			if (["K","k","N","n"].includes(piece)) {							// Rather different logic, careful... (and note this doesn't include castling)
-
-				let attack_array = king_attacks;
-				if (piece === "N" || piece === "n") attack_array = knight_attacks;
-
-				for (let attack of attack_array) {
-					let mail = initial_mail + attack;
-					let sq_index = mailbox[mail];
-					if (sq_index === -1) {
-						continue;
-					}
-					let sq_piece = this.state[sq_index];
-					if (movers.includes(sq_piece)) {							// Blocked by friendly
-						continue;
-					}
-					ret.push(i_to_s(i) + i_to_s(sq_index));
-				}
-			}
-
-			if (piece === "P" || piece === "p") {
+			} else {
 
 				let [x1, y1] = i_to_xy(i);
 
