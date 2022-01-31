@@ -176,11 +176,11 @@ const board_prototype = {
 					continue;
 				}
 				if (defender_colour === "w") {
-					if (sq_piece === "k" || sq_piece === "q" || sq_piece === "r") {
+					if (sq_piece === "q" || sq_piece === "r") {
 						return true;
 					}
 				} else {
-					if (sq_piece === "K" || sq_piece === "Q" || sq_piece === "R") {
+					if (sq_piece === "Q" || sq_piece === "R") {
 						return true;
 					}
 				}
@@ -201,7 +201,7 @@ const board_prototype = {
 					continue;
 				}
 				if (defender_colour === "w") {
-					if (sq_piece === "k" || sq_piece === "q" || sq_piece === "b") {
+					if (sq_piece === "q" || sq_piece === "b") {
 						return true;
 					}
 					if (sq_piece === "p") {
@@ -210,7 +210,7 @@ const board_prototype = {
 						}
 					}
 				} else {
-					if (sq_piece === "K" || sq_piece === "Q" || sq_piece === "B") {
+					if (sq_piece === "Q" || sq_piece === "B") {
 						return true;
 					}
 					if (sq_piece === "P") {
@@ -234,6 +234,21 @@ const board_prototype = {
 				return true;
 			}
 			if (sq_piece === "N" && defender_colour === "b") {
+				return true;
+			}
+		}
+
+		for (let attack of king_attacks) {			// Same as knights...
+			let mail = initial_mail + attack;
+			let sq_index = mailbox[mail];
+			if (sq_index === -1) {
+				continue;
+			}
+			let sq_piece = this.state[sq_index];
+			if (sq_piece === "k" && defender_colour === "w") {
+				return true;
+			}
+			if (sq_piece === "K" && defender_colour === "b") {
 				return true;
 			}
 		}
@@ -619,9 +634,94 @@ const board_prototype = {
 
 	pseudolegal_castling: function() {
 
-		// Returned moves are legal unless the king ends in check. TODO / FIXME
+		let ret = [];
+		let possible_rook_x = [];
 
-		return [];
+		if (this.active === "w") {
+			for (let ch of this.castling) {
+				if ("A" <= ch && ch <= "H") {
+					possible_rook_x.push(ch.charCodeAt(0) - 65);
+				}
+			}
+		} else {
+			for (let ch of this.castling) {
+				if ("a" <= ch && ch <= "h") {
+					possible_rook_x.push(ch.charCodeAt(0) - 97);
+				}
+			}
+		}
+
+		if (possible_rook_x.length === 0) {
+			return ret;
+		}
+
+		let x1y1;
+
+		if (this.active === "w") {
+			x1y1 = this.find("K", 0, 7, 7, 7)[0];
+		} else {
+			x1y1 = this.find("k", 0, 7, 7, 7)[0];
+		}
+
+		if (!x1y1) {
+			return ret;
+		}
+
+		let x1 = x1y1[0];						// king start x
+		let y1 = x1y1[1];						// king start y
+
+		for (let x2 of possible_rook_x) {		// rook start x
+
+			let king_target_x;
+			let rook_target_x;
+
+			if (x1 < x2) {						// Castling kingside
+				king_target_x = 6;
+				rook_target_x = 5;
+			} else {							// Castling queenside
+				king_target_x = 2;
+				rook_target_x = 3;
+			}
+
+			let king_path = numbers_between(x1, king_target_x);
+			let rook_path = numbers_between(x2, rook_target_x);
+
+			let ok = true;
+
+			for (let x of king_path) {
+				if (this.attacked(this.active, x, y1)) {
+					ok = false;
+					break;
+				}
+				if (x === x1 || x === x2) {		// Ignore "blockers" that are the king or rook themselves
+					continue;					// (after checking for checks)
+				}
+				if (this.get(x, y1)) {
+					ok = false;
+					break;
+				}
+			}
+
+			if (!ok) {
+				continue;
+			}
+
+			for (let x of rook_path) {
+				if (x === x1 || x === x2) {		// Ignore "blockers" that are the king or rook themselves
+					continue;
+				}
+				if (this.get(x, y1)) {
+					ok = false;
+					break;
+				}
+			}
+
+			if (ok) {
+				ret.push(xy_to_s(x1, y1) + xy_to_s(x2, y1));
+			}
+		}
+
+		return ret;
 
 	},
 
@@ -681,6 +781,23 @@ function i_to_xy(i) {
 	let x = i % 8;
 	let y = (i - x) / 8;
 	return [x, y];
+}
+
+function numbers_between(a, b) {
+
+	// Given integers a and b, return a list of integers between the two, inclusive.
+
+	let add = a < b ? 1 : -1;
+
+	let ret = [];
+
+	for (let x = a; x !== b; x += add) {
+		ret.push(x);
+	}
+
+	ret.push(b);
+
+	return ret;
 }
 
 // ------------------------------------------------------------------------------------------------
