@@ -1,18 +1,5 @@
 "use strict";
 
-function replace_all(s, search, replace) {
-	if (!s.includes(search)) return s;								// Seems to improve speed overall
-	return s.split(search).join(replace);
-}
-
-function index_from_args(arg1, arg2) {								// For the normal len-64 arrays
-	if (typeof(arg1) === "string") {
-		return (arg1.charCodeAt(0) - 97) + ((8 - (arg1.charCodeAt(1) - 48)) * 8);
-	} else {
-		return arg1 + (arg2 * 8);
-	}
-}
-
 const mailbox = [
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -170,9 +157,9 @@ exports.new_board_from_fen = function(fen) {
 	// Some hard things. Do these in the right order!
 
 	ret.castling = castling_rights(ret, tokens[2]);
+	ret.enpassant = fen_passant_square(ret, tokens[3]);
 /*
-	ret.enpassant = EnPassantSquare(ret, tokens[3]);	// Requires ret.active to be correct.
-	ret.normalchess = IsNormalChessPosition(ret);		// Requires ret.castling to be correct.
+	ret.normalchess = IsNormalChessPosition(ret);					// Requires ret.castling to be correct.
 */
 	return ret;
 }
@@ -411,6 +398,19 @@ const board_prototype = {
 
 };
 
+function replace_all(s, search, replace) {
+	if (!s.includes(search)) return s;								// Seems to improve speed overall
+	return s.split(search).join(replace);
+}
+
+function index_from_args(arg1, arg2) {								// For the normal len-64 arrays
+	if (typeof(arg1) === "string") {
+		return (arg1.charCodeAt(0) - 97) + ((8 - (arg1.charCodeAt(1) - 48)) * 8);
+	} else {
+		return arg1 + (arg2 * 8);
+	}
+}
+
 function castling_rights(board, s) {					// s is the castling string from a FEN
 
 	let dict = Object.create(null);						// Will contain keys like "A" to "H" and "a" to "h"
@@ -517,4 +517,12 @@ function castling_rights(board, s) {					// s is the castling string from a FEN
 
 	// FIXME: check at most 1 castling possibility on left and right of each king?
 	// At the moment we support more arbitrary castling rights, maybe that's OK.
+}
+
+function fen_passant_square(board, s) {				// FIXME / TODO
+	if (["a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3", "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6"].includes(s)) {
+		return s;
+	} else {
+		return null;
+	}
 }
