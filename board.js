@@ -725,6 +725,34 @@ const board_prototype = {
 
 	},
 
+	can_capture_king: function() {
+
+		let opp_colour  = this.active === "w" ? "b" : "w";
+		let opp_king    = this.active === "w" ? "k" : "K";
+
+		for (let i = 0; i < 64; i++) {
+			if (this.state[i] === (opp_king)) {
+				if (this.attacked(opp_colour, i_to_s(i))) {
+					return true;
+				} else {
+					return false;
+				}
+			}
+		}
+	},
+
+	movegen: function() {
+		let pseudolegals = this.pseudolegals();
+		let ret = [];
+		for (let move of pseudolegals) {
+			let board = this.move(move);
+			if (!board.can_capture_king()) {
+				ret.push(move);
+			}
+		}
+		return ret;
+	},
+
 };
 
 // ------------------------------------------------------------------------------------------------
