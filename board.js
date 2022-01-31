@@ -26,9 +26,17 @@ const mailbox64 = [
 	91, 92, 93, 94, 95, 96, 97, 98,
 ];
 
-const cardinal_attacks = [-10, 1, 10, -1];
-const diagonal_attacks = [-11, -9, 11, 9];
 const knight_attacks = [-21, -19, -8, 12, 21, 19, 8, -12];
+const rook_attacks = [-10, 1, 10, -1];
+const bishop_attacks = [-11, -9, 11, 9];
+const queen_attacks = rook_attacks.concat(bishop_attacks);
+const king_attacks = rook_attacks.concat(bishop_attacks);
+
+const white_p_push = -10;
+const black_p_push = 10;
+
+const white_p_caps = [-11, -9];
+const black_p_caps = [11, 9];
 
 // ------------------------------------------------------------------------------------------------
 
@@ -155,7 +163,7 @@ const board_prototype = {
 		let index = index_from_args(arg1, arg2);
 		let initial_mail = mailbox64[index];
 
-		for (let attack of cardinal_attacks) {
+		for (let attack of rook_attacks) {
 			let mail = initial_mail;
 			while (true) {
 				mail += attack;
@@ -180,7 +188,7 @@ const board_prototype = {
 			}
 		}
 
-		for (let attack of diagonal_attacks) {
+		for (let attack of bishop_attacks) {
 			let mail = initial_mail;
 			while (true) {
 				mail += attack;
@@ -259,7 +267,7 @@ const board_prototype = {
 			}
 		}
 
-		// FIXME: possibly implement friendly and book modes.
+		// FIXME: possibly implement book mode.
 
 		let ep_string = this.enpassant ? this.enpassant : "-";
 		let castling_string = this.castling !== "" ? this.castling : "-";
@@ -305,7 +313,7 @@ const board_prototype = {
 		let [x2, y2] = s_to_xy(target);
 		let source_piece = this.get(x1, y1);
 		let target_piece = this.get(x2, y2);
-		let promotion_char = (s.length > 4) ? s[4].toLowerCase() : "q";		// But caller shouldn't send promotion move without promotion char. Hmm.
+		let promotion_char = (s.length > 4) ? s[4].toLowerCase() : "q";		// But caller shouldn't send promotion move without promotion char? Hmm.
 
 		let ret = this.copy();
 
@@ -444,6 +452,179 @@ const board_prototype = {
 		this.castling = new_rights;
 	},
 
+	pseudolegals: function() {
+
+		// List of moves which will be legal, unless they leave the king in check...
+
+		let ret = [];
+
+		let movers = (this.active === "w") ? ["K","Q","R","B","N","P"] : ["k","q","r","b","n","p"];
+		let enemies = (this.active === "w") ? ["k","q","r","b","n","p"] : ["K","Q","R","B","N","P"];
+
+		for (let i = 0; i < 64; i++) {
+
+			let piece = this.state[i];
+
+			if (!movers.includes(piece)) {
+				continue;
+			}
+
+			let initial_mail = mailbox64[i];
+
+			if (["Q","q","R","r","B","b"].includes(piece)) {
+
+				let attack_array = queen_attacks;
+				if (piece === "R" || piece === "r") attack_array = rook_attacks;
+				if (piece === "B" || piece === "b") attack_array = bishop_attacks;
+
+				for (let attack of attack_array) {
+					let mail = initial_mail;
+					while (true) {
+						mail += attack;
+						let sq_index = mailbox[mail];
+						if (sq_index === -1) {
+							break;
+						}
+						let sq_piece = this.state[sq_index];
+						if (this.state[sq_index] === "") {						// Moving to empty
+							ret.push(i_to_s(i) + i_to_s(sq_index));
+							continue;
+						} else if (movers.includes(this.state[sq_index])) {		// Blocked by friendly
+							break;
+						} else {												// Capture
+							ret.push(i_to_s(i) + i_to_s(sq_index));
+							break;
+						}
+					}
+				}
+			}
+
+			if (["K","k","N","n"].includes(piece)) {							// Rather different logic, careful... (and note this doesn't include castling)
+
+				let attack_array = king_attacks;
+				if (piece === "N" || piece === "n") attack_array = knight_attacks;
+
+				for (let attack of attack_array) {
+					let mail = initial_mail + attack;
+					let sq_index = mailbox[mail];
+					if (sq_index === -1) {
+						continue;
+					}
+					let sq_piece = this.state[sq_index];
+					if (movers.includes(sq_piece)) {							// Blocked by friendly
+						continue;
+					}
+					ret.push(i_to_s(i) + i_to_s(sq_index));
+				}
+			}
+
+			if (piece === "P" || piece === "p") {
+
+				let [x1, y1] = i_to_xy(i);
+
+				let push = piece === "P" ? white_p_push : black_p_push;
+
+				let will_promote    = (piece === "P" && y1 === 1) || (piece === "p" && y1 === 6);
+				let can_double_push = (piece === "P" && y1 === 6) || (piece === "p" && y1 === 1);
+
+				let mail = initial_mail + push;
+				let sq_index = mailbox[mail];									// We don't really need mailbox shennanigans, but use it for consistency.
+				let sq_piece = this.state[sq_index];
+				if (sq_piece === "") {
+					if (will_promote) {
+						ret.push(i_to_s(i) + i_to_s(sq_index) + "q");
+						ret.push(i_to_s(i) + i_to_s(sq_index) + "r");
+						ret.push(i_to_s(i) + i_to_s(sq_index) + "b");
+						ret.push(i_to_s(i) + i_to_s(sq_index) + "n");
+					} else {
+						ret.push(i_to_s(i) + i_to_s(sq_index));
+						if (can_double_push) {
+							mail += push;
+							sq_index = mailbox[mail];
+							sq_piece = this.state[sq_index];
+							if (sq_piece === "") {
+								ret.push(i_to_s(i) + i_to_s(sq_index));
+							}
+						}
+					}
+				}
+
+				// Captures (not including e.p. captures)...
+
+				let attack_array = white_p_caps;
+				if (piece === "p") attack_array = black_p_caps;
+
+				for (let attack of attack_array) {
+
+					let mail = initial_mail + attack;
+
+					let sq_index = mailbox[mail];
+					if (sq_index === -1) {
+						continue;
+					}
+
+					sq_piece = this.state[sq_index];
+					if (enemies.includes(sq_piece)) {
+						if (will_promote) {
+							ret.push(i_to_s(i) + i_to_s(sq_index) + "q");
+							ret.push(i_to_s(i) + i_to_s(sq_index) + "r");
+							ret.push(i_to_s(i) + i_to_s(sq_index) + "b");
+							ret.push(i_to_s(i) + i_to_s(sq_index) + "n");
+						} else {
+							ret.push(i_to_s(i) + i_to_s(sq_index));
+						}
+					}
+				}
+			}
+		}
+
+		ret = ret.concat(this.pseudolegal_ep_captures());
+		ret = ret.concat(this.pseudolegal_castling());
+
+		return ret;
+	},
+
+	pseudolegal_ep_captures: function() {
+
+		// Very much assumes this.enpassant is correct.
+
+		let ret = [];
+
+		if (!this.enpassant) {
+			return ret;
+		}
+
+		let [epx, epy] = s_to_xy(this.enpassant);
+
+		if (epy === 2) {
+			if (epx > 0 && this.get(epx - 1, epy + 1) === "P") {
+				ret.push(xy_to_s(epx - 1, epy + 1) + this.enpassant);
+			}
+			if (epx < 7 && this.get(epx + 1, epy + 1) === "P") {
+				ret.push(xy_to_s(epx + 1, epy + 1) + this.enpassant);
+			}
+		}
+
+		if (epy === 5) {
+			if (epx > 0 && this.get(epx - 1, epy - 1) === "p") {
+				ret.push(xy_to_s(epx - 1, epy - 1) + this.enpassant);
+			}
+			if (epx < 7 && this.get(epx + 1, epy - 1) === "p") {
+				ret.push(xy_to_s(epx + 1, epy - 1) + this.enpassant);
+			}
+		}
+
+		return ret;
+	},
+
+	pseudolegal_castling: function() {
+
+		// Returned moves are legal unless the king ends in check. TODO / FIXME
+
+		return [];
+
+	},
+
 };
 
 // ------------------------------------------------------------------------------------------------
@@ -488,6 +669,18 @@ function xy_to_s(x, y) {
 	let xs = String.fromCharCode(x + 97);
 	let ys = String.fromCharCode((8 - y) + 48);
 	return xs + ys;
+}
+
+function i_to_s(i) {
+	let x = i % 8;
+	let y = (i - x) / 8;
+	return xy_to_s(x, y);
+}
+
+function i_to_xy(i) {
+	let x = i % 8;
+	let y = (i - x) / 8;
+	return [x, y];
 }
 
 // ------------------------------------------------------------------------------------------------
