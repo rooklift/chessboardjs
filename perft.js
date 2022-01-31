@@ -54,3 +54,30 @@ function perft_print_move(pos, mv, val) {
 	console.log(`${mv + (mv.length === 4 ? " " : "")}   ${nice + " ".repeat(7 - nice.length)}`, val);
 }
 
+// ------------------------------------------------------------------------------------------------
+
+exports.filetest = function() {
+
+	let fs = require("fs");
+
+	let infile = fs.readFileSync("perft-marcel.epd", "utf8");
+
+	for (let line of infile.split("\n")) {
+
+		line = line.trim();
+
+		if (line === "") {
+			return;
+		}
+
+		let parts = line.split(";");
+
+		let fen = parts[0];
+		let d3 = parseFloat(parts[3].trim().split(" ")[1]);
+
+		let board = boardjs.new_board_from_fen(fen);
+		let val = perft_recurse(board, 3, false);
+
+		console.log(val === d3 ? " OK " : " --------- BAD! --------- ", fen);
+	}
+}
