@@ -30,6 +30,8 @@ const cardinal_attacks = [-10, 1, 10, -1];
 const diagonal_attacks = [-11, -9, 11, 9];
 const knight_attacks = [-21, -19, -8, 12, 21, 19, 8, -12];
 
+// ------------------------------------------------------------------------------------------------
+
 function new_board(state = null, active = "w", castling = "", enpassant = null, halfmove = 0, fullmove = 1, normalchess = false) {
 
 	let ret = Object.create(board_prototype);
@@ -58,111 +60,6 @@ function new_board(state = null, active = "w", castling = "", enpassant = null, 
 
 	return ret;
 }
-
-exports.new_board_from_fen = function(fen) {
-
-	if (fen.length > 200) {
-		throw new Error("Invalid FEN - size");
-	}
-
-	let ret = new_board();
-
-	fen = replace_all(fen, "\t", " ");
-	fen = replace_all(fen, "\n", " ");
-	fen = replace_all(fen, "\r", " ");
-
-	let tokens = fen.split(" ").filter(z => z !== "");
-
-	if (tokens.length === 1) tokens.push("w");
-	if (tokens.length === 2) tokens.push("-");
-	if (tokens.length === 3) tokens.push("-");
-	if (tokens.length === 4) tokens.push("0");
-	if (tokens.length === 5) tokens.push("1");
-
-	if (tokens.length !== 6) {
-		throw new Error("Invalid FEN - token count");
-	}
-
-	if (tokens[0].endsWith("/")) {									// Some FEN writer does this
-		tokens[0] = tokens[0].slice(0, -1);
-	}
-
-	let rows = tokens[0].split("/");
-
-	if (rows.length > 8) {
-		throw new Error("Invalid FEN - board row count");
-	}
-
-	let white_kings = 0;
-	let black_kings = 0;
-
-	for (let y = 0; y < rows.length; y++) {
-
-		let x = 0;
-
-		for (let c of rows[y]) {
-
-			if (x > 7) {
-				throw new Error("Invalid FEN - row length");
-			}
-
-			if (["1", "2", "3", "4", "5", "6", "7", "8"].includes(c)) {
-				x += parseInt(c, 10);
-				continue;
-			}
-
-			if ((c === "P" || c === "p") && (y === 0 || y === 7)) {
-				throw new Error("Invalid FEN - pawn position");
-			}
-
-			if (["K", "k", "Q", "q", "R", "r", "B", "b", "N", "n", "P", "p"].includes(c)) {
-				ret.set(c, x, y);
-				x++;
-				if (c === "K") white_kings++;
-				if (c === "k") black_kings++;
-				continue;
-			}
-
-			throw new Error("Invalid FEN - unknown piece");
-		}
-	}
-
-	tokens[1] = tokens[1].toLowerCase();
-	if (tokens[1] !== "w" && tokens[1] !== "b") {
-		throw new Error("Invalid FEN - active player");
-	}
-	ret.active = tokens[1];
-
-	ret.halfmove = parseInt(tokens[4], 10);
-	if (Number.isNaN(ret.halfmove)) {
-		throw new Error("Invalid FEN - halfmoves");
-	}
-
-	ret.fullmove = parseInt(tokens[5], 10);
-	if (Number.isNaN(ret.fullmove)) {
-		throw new Error("Invalid FEN - fullmoves");
-	}
-
-	if (white_kings !== 1 || black_kings !== 1) {
-		throw "Invalid FEN - number of kings";
-	}
-
-	let opponent_king_char = ret.active === "w" ? "k" : "K";
-	let [opponent_king_x, opponent_king_y] = ret.find(opponent_king_char)[0];
-
-	if (ret.attacked(ret.active === "w" ? "b" : "w", opponent_king_x, opponent_king_y)) {
-		throw new Error("Invalid FEN - non-mover's king in check");
-	}
-
-	// Some hard things. Do these in the right order!
-
-	ret.castling = castling_rights(ret, tokens[2]);
-	ret.enpassant = fen_passant_square(ret, tokens[3]);				// Requires ret.active to be correct. (FIXME / TODO, see below).
-	ret.normalchess = is_normal_chess(ret);							// Requires ret.castling to be correct.
-
-	return ret;
-}
-
 
 const board_prototype = {
 
@@ -549,7 +446,7 @@ const board_prototype = {
 
 };
 
-
+// ------------------------------------------------------------------------------------------------
 
 function replace_all(s, search, replace) {
 	if (!s.includes(search)) return s;								// Seems to improve speed overall
@@ -591,6 +488,112 @@ function xy_to_s(x, y) {
 	let xs = String.fromCharCode(x + 97);
 	let ys = String.fromCharCode((8 - y) + 48);
 	return xs + ys;
+}
+
+// ------------------------------------------------------------------------------------------------
+
+exports.new_board_from_fen = function(fen) {
+
+	if (fen.length > 200) {
+		throw new Error("Invalid FEN - size");
+	}
+
+	let ret = new_board();
+
+	fen = replace_all(fen, "\t", " ");
+	fen = replace_all(fen, "\n", " ");
+	fen = replace_all(fen, "\r", " ");
+
+	let tokens = fen.split(" ").filter(z => z !== "");
+
+	if (tokens.length === 1) tokens.push("w");
+	if (tokens.length === 2) tokens.push("-");
+	if (tokens.length === 3) tokens.push("-");
+	if (tokens.length === 4) tokens.push("0");
+	if (tokens.length === 5) tokens.push("1");
+
+	if (tokens.length !== 6) {
+		throw new Error("Invalid FEN - token count");
+	}
+
+	if (tokens[0].endsWith("/")) {									// Some FEN writer does this
+		tokens[0] = tokens[0].slice(0, -1);
+	}
+
+	let rows = tokens[0].split("/");
+
+	if (rows.length > 8) {
+		throw new Error("Invalid FEN - board row count");
+	}
+
+	let white_kings = 0;
+	let black_kings = 0;
+
+	for (let y = 0; y < rows.length; y++) {
+
+		let x = 0;
+
+		for (let c of rows[y]) {
+
+			if (x > 7) {
+				throw new Error("Invalid FEN - row length");
+			}
+
+			if (["1", "2", "3", "4", "5", "6", "7", "8"].includes(c)) {
+				x += parseInt(c, 10);
+				continue;
+			}
+
+			if ((c === "P" || c === "p") && (y === 0 || y === 7)) {
+				throw new Error("Invalid FEN - pawn position");
+			}
+
+			if (["K", "k", "Q", "q", "R", "r", "B", "b", "N", "n", "P", "p"].includes(c)) {
+				ret.set(c, x, y);
+				x++;
+				if (c === "K") white_kings++;
+				if (c === "k") black_kings++;
+				continue;
+			}
+
+			throw new Error("Invalid FEN - unknown piece");
+		}
+	}
+
+	tokens[1] = tokens[1].toLowerCase();
+	if (tokens[1] !== "w" && tokens[1] !== "b") {
+		throw new Error("Invalid FEN - active player");
+	}
+	ret.active = tokens[1];
+
+	ret.halfmove = parseInt(tokens[4], 10);
+	if (Number.isNaN(ret.halfmove)) {
+		throw new Error("Invalid FEN - halfmoves");
+	}
+
+	ret.fullmove = parseInt(tokens[5], 10);
+	if (Number.isNaN(ret.fullmove)) {
+		throw new Error("Invalid FEN - fullmoves");
+	}
+
+	if (white_kings !== 1 || black_kings !== 1) {
+		throw "Invalid FEN - number of kings";
+	}
+
+	let opponent_king_char = ret.active === "w" ? "k" : "K";
+	let [opponent_king_x, opponent_king_y] = ret.find(opponent_king_char)[0];
+
+	if (ret.attacked(ret.active === "w" ? "b" : "w", opponent_king_x, opponent_king_y)) {
+		throw new Error("Invalid FEN - non-mover's king in check");
+	}
+
+	// Some hard things. Do these in the right order!
+
+	ret.castling = castling_rights(ret, tokens[2]);
+	ret.enpassant = fen_passant_square(ret, tokens[3]);				// Requires ret.active to be correct. (FIXME / TODO, see below).
+	ret.normalchess = is_normal_chess(ret);							// Requires ret.castling to be correct.
+
+	return ret;
 }
 
 function castling_rights(board, s) {					// s is the castling string from a FEN
