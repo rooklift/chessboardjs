@@ -459,7 +459,7 @@ const board_prototype = {
 
 		let ret = [];
 
-		let movers = (this.active === "w") ? ["K","Q","R","B","N","P"] : ["k","q","r","b","n","p"];
+		let movers  = (this.active === "w") ? ["K","Q","R","B","N","P"] : ["k","q","r","b","n","p"];
 		let enemies = (this.active === "w") ? ["k","q","r","b","n","p"] : ["K","Q","R","B","N","P"];
 
 		for (let i = 0; i < 64; i++) {
@@ -770,7 +770,7 @@ function s_to_xy(s) {
 
 function xy_to_s(x, y) {
 	let xs = String.fromCharCode(x + 97);
-	let ys = String.fromCharCode((8 - y) + 48);
+	let ys = String.fromCharCode(56 - y);
 	return xs + ys;
 }
 
