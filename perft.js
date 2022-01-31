@@ -62,12 +62,14 @@ exports.filetest = function() {
 
 	let infile = fs.readFileSync("perft-marcel.epd", "utf8");
 
+	let bad_results = [];
+
 	for (let line of infile.split("\n")) {
 
 		line = line.trim();
 
 		if (line === "") {
-			return;
+			break;
 		}
 
 		let parts = line.split(";");
@@ -78,6 +80,18 @@ exports.filetest = function() {
 		let board = boardjs.new_board_from_fen(fen);
 		let val = perft_recurse(board, 3, false);
 
-		console.log(val === d3 ? " OK " : " --------- BAD! --------- ", fen);
+		if (val === d3) {
+			console.log(" OK ", fen);
+		} else {
+			console.log(" -------- BAD! -------- ", fen);
+			bad_results.push(fen);
+		}
+	}
+
+	if (bad_results.length > 0) {
+		console.log("\nBAD RESULTS:");
+		for (let item of bad_results) {
+			console.log(item);
+		}
 	}
 }
