@@ -1021,12 +1021,12 @@ function fen_passant_square(board, s) {
 	if (board.active === "w" && ["a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6"].includes(s)) {
 		let col = s.charCodeAt(0) - 97;
 		if (board.get(col, 3) !== "p") return null;					// Check capturable pawn exists.
-		if (col > 0 && board.get(col - 1, 3) === "P") return s;
-		if (col < 7 && board.get(col + 1, 3) === "P") return s;
+		if (col > 0 && board.get(col - 1, 3) === "P") return s;		// Then check 2 ways a capturing
+		if (col < 7 && board.get(col + 1, 3) === "P") return s;		// pawn could exist.
 	}
 	if (board.active === "b" && ["a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3"].includes(s)) {
 		let col = s.charCodeAt(0) - 97;
-		if (board.get(col, 4) !== "P") return null;					// Check capturable pawn exists.
+		if (board.get(col, 4) !== "P") return null;
 		if (col > 0 && board.get(col - 1, 4) === "p") return s;
 		if (col < 7 && board.get(col + 1, 4) === "p") return s;
 	}
