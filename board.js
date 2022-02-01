@@ -705,19 +705,19 @@ const board_prototype = {
 
 		if (this.active === "w" && epy === 2) {
 			if (epx > 0 && this.get(epx - 1, epy + 1) === "P") {
-				ret.push(xy_to_s(epx - 1, epy + 1) + xs_to_s(epx, epy));
+				ret.push(xy_to_s(epx - 1, epy + 1) + xy_to_s(epx, epy));
 			}
 			if (epx < 7 && this.get(epx + 1, epy + 1) === "P") {
-				ret.push(xy_to_s(epx + 1, epy + 1) + xs_to_s(epx, epy));
+				ret.push(xy_to_s(epx + 1, epy + 1) + xy_to_s(epx, epy));
 			}
 		}
 
 		if (this.active === "b" && epy === 5) {
 			if (epx > 0 && this.get(epx - 1, epy - 1) === "p") {
-				ret.push(xy_to_s(epx - 1, epy - 1) + xs_to_s(epx, epy));
+				ret.push(xy_to_s(epx - 1, epy - 1) + xy_to_s(epx, epy));
 			}
 			if (epx < 7 && this.get(epx + 1, epy - 1) === "p") {
-				ret.push(xy_to_s(epx + 1, epy - 1) + xs_to_s(epx, epy));
+				ret.push(xy_to_s(epx + 1, epy - 1) + xy_to_s(epx, epy));
 			}
 		}
 
