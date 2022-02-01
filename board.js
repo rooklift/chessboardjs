@@ -903,7 +903,7 @@ exports.new_board_from_fen = function(fen) {
 	// Some hard things. Do these in the right order!
 
 	ret.castling = castling_rights(ret, tokens[2]);
-	ret.enpassant = fen_passant_square(ret, tokens[3]);				// Requires ret.active to be correct. (FIXME / TODO, see below).
+	ret.enpassant = fen_passant_square(ret, tokens[3]);				// Requires ret.active to be correct.
 	ret.normalchess = is_normal_chess(ret);							// Requires ret.castling to be correct.
 
 	return ret;
