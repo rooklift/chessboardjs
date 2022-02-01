@@ -292,7 +292,7 @@ const board_prototype = {
 	compare: function(other) {
 		if (this.active !== other.active) return false;
 		if (this.castling !== other.castling) return false;
-		if (this.enpassant !== other.enpassant) return false;		// FIXME? Issues around fake e.p. squares.
+		if (this.enpassant !== other.enpassant) return false;
 		for (let i = 0; i < 64; i++) {
 			if (this.state[i] !== other.state[i]) {
 				return false;
@@ -744,11 +744,11 @@ const board_prototype = {
 // ------------------------------------------------------------------------------------------------
 
 function replace_all(s, search, replace) {
-	if (!s.includes(search)) return s;								// Seems to improve speed overall
+	if (!s.includes(search)) return s;				// Seems to improve speed overall
 	return s.split(search).join(replace);
 }
 
-function index_from_args(arg1, arg2) {								// For the normal len-64 arrays
+function index_from_args(arg1, arg2) {				// For the normal len-64 arrays
 	if (typeof(arg1) === "string") {
 		let a = arg1.charCodeAt(0);
 		let b = arg1.charCodeAt(1);
@@ -756,21 +756,6 @@ function index_from_args(arg1, arg2) {								// For the normal len-64 arrays
 	} else {
 		return arg1 + (arg2 * 8);
 	}
-}
-
-function valid_coord(s) {
-	if (s.length !== 2) {
-		return false;
-	}
-	let a = s.charCodeAt(0);
-	if (a < 97 || a > 104) {
-		return false;
-	}
-	let b = s.charCodeAt(1);
-	if (b < 49 || b > 56) {
-		return false;
-	}
-	return true;
 }
 
 function s_to_xy(s) {
