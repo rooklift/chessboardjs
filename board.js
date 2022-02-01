@@ -118,6 +118,10 @@ const board_prototype = {
 		throw new Error("inactive(): bad active");
 	},
 
+	active_king_index() {
+		return this.active === "w" ? this.wk : this.bk;
+	},
+
 	graphic: function() {
 		let units = [];
 		for (let y = 0; y < 8; y++) {
@@ -165,7 +169,7 @@ const board_prototype = {
 			for (let y = starty; y <= endy; y++) {
 				let index = x + (y * 8);
 				if (this.state[index] === piece) {
-					ret.push([x, y]);
+					ret.push(index);
 				}
 			}
 		}
@@ -480,6 +484,9 @@ const board_prototype = {
 	},
 
 	movegen: function() {
+		if (Array.isArray(this.__movegen_cache)) {			// FIXME - don't want this.
+			return Array.from(this.__movegen_cache);
+		}
 		let pseudolegals = this.pseudolegals();
 		let ret = [];
 		for (let move of pseudolegals) {
@@ -488,6 +495,7 @@ const board_prototype = {
 				ret.push(move);
 			}
 		}
+		this.__movegen_cache = Array.from(ret);
 		return ret;
 	},
 
@@ -756,6 +764,10 @@ const board_prototype = {
 		}
 	},
 
+	in_check: function() {
+		return this.attacked(this.active, this.active_king_index());
+	},
+
 	c960_castling_converter: function(s) {
 		// Given some move s, convert it to the new Chess 960 castling format if needed.
 		if (s === "e1g1" && this.get(4, 7) === "K" && this.castling.includes("G") === false) return "e1h1";
@@ -763,6 +775,147 @@ const board_prototype = {
 		if (s === "e8g8" && this.get(4, 0) === "k" && this.castling.includes("g") === false) return "e8h8";
 		if (s === "e8c8" && this.get(4, 0) === "k" && this.castling.includes("c") === false) return "e8a8";
 		return s;
+	},
+
+	no_moves: function() {
+		return this.movegen().length === 0;			// FIXME: ideally short-circuit the movegen asap
+	},
+
+	illegal: function(s) {							// FIXME: todo properly
+		if (this.movegen().includes(s)) {
+			return "";
+		} else {
+			return "Illegal <reason>";
+		}
+	},
+
+	nice_string: function(s) {
+
+		// Given some raw (but valid) UCI move string, return a nice human-readable string
+		// for display in the browser window. This string should never be examined by the
+		// caller, merely displayed.
+		//
+		// Reminder: castling moves are expected to be king-onto-rook (Chess960 format).
+
+		if (typeof(s) !== "string" || s.length < 4) {
+			return "??";
+		}
+
+		let source = s.slice(0, 2);
+		let target = s.slice(2, 4);
+
+		if (!valid_coord(source) || !valid_coord(target)) {
+			return "??";
+		}
+
+		let piece = this.get(source);
+		let tar_piece = this.get(target);
+
+		if (piece === "") {
+			return "??";
+		}
+
+		let [x1, y1] = s_to_xy(source);
+		let [x2, y2] = s_to_xy(target);
+
+		let check = "";
+		let next_board = this.move(s);
+
+		if (next_board.in_check()) {
+			if (next_board.no_moves()) {
+				check = "#";
+			} else {
+				check = "+";
+			}
+		}
+
+		if (["K", "k", "Q", "q", "R", "r", "B", "b", "N", "n"].includes(piece)) {
+
+			if ((piece === "K" && tar_piece === "R") || (piece === "k" && tar_piece === "r")) {
+				if (x1 < x2) {
+					return `O-O${check}`;
+				} else {
+					return `O-O-O${check}`;
+				}
+			}
+
+			// Would the move be ambiguous?
+			// IMPORTANT: note that the actual move will not necessarily be valid_moves[0].
+
+			let possible_sources = this.find(piece);
+			let possible_moves = [];
+			let valid_moves = [];
+
+			for (let foo of possible_sources) {
+				possible_moves.push(i_to_s(foo) + target);		// e.g. "g1f3"
+			}
+
+			for (let move of possible_moves) {
+				if (this.illegal(move) === "") {
+					valid_moves.push(move);
+				}
+			}
+
+			if (valid_moves.length > 2) {
+
+				// Full disambiguation.
+
+				if (tar_piece === "") {
+					return piece.toUpperCase() + source + target + check;
+				} else {
+					return piece.toUpperCase() + source + "x" + target + check;
+				}
+			}
+
+			if (valid_moves.length === 2) {
+
+				// Partial disambiguation.
+
+				let source1 = valid_moves[0].slice(0, 2);
+				let source2 = valid_moves[1].slice(0, 2);
+
+				let disambiguator;
+
+				if (source1[0] === source2[0]) {		// Comparing columns
+					disambiguator = source[1];			// Note source (the true source), not source1
+				} else {
+					disambiguator = source[0];			// Note source (the true source), not source1
+				}
+
+				if (tar_piece === "") {
+					return piece.toUpperCase() + disambiguator + target + check;
+				} else {
+					return piece.toUpperCase() + disambiguator + "x" + target + check;
+				}
+			}
+
+			// No disambiguation.
+
+			if (tar_piece === "") {
+				return piece.toUpperCase() + target + check;
+			} else {
+				return piece.toUpperCase() + "x" + target + check;
+			}
+		}
+
+		// So it's a pawn. Pawn moves are never ambiguous.
+
+		let ret;
+
+		if (source[0] === target[0]) {
+			ret = target;
+		} else {
+			ret = source[0] + "x" + target;
+		}
+
+		if (s.length > 4) {
+			ret += "=";
+			ret += s[4].toUpperCase();
+		}
+
+		ret += check;
+
+		return ret;
 	},
 
 };
@@ -820,6 +973,21 @@ function numbers_between(a, b) {					// Inclusive
 function replace_all(s, search, replace) {
 	if (!s.includes(search)) return s;				// Seems to improve speed overall
 	return s.split(search).join(replace);
+}
+
+function valid_coord(s) {
+	if (s.length !== 2) {
+		return false;
+	}
+	let a = s.charCodeAt(0);
+	if (a < 97 || a > 104) {
+		return false;
+	}
+	let b = s.charCodeAt(1);
+	if (b < 49 || b > 56) {
+		return false;
+	}
+	return true;
 }
 
 // ------------------------------------------------------------------------------------------------
