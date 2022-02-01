@@ -453,12 +453,20 @@ const board_prototype = {
 		this.castling = new_rights;
 	},
 
-	pseudolegals: function() {
-		let ret = this.pseudolegal_piece_moves();
-		ret = ret.concat(this.pseudolegal_pawn_moves());
-		ret = ret.concat(this.pseudolegal_ep_captures());
-		ret = ret.concat(this.pseudolegal_castling());
+	movegen: function() {
+		let pseudolegals = this.pseudolegals();
+		let ret = [];
+		for (let move of pseudolegals) {
+			let board = this.move(move);
+			if (!board.__can_capture_king()) {
+				ret.push(move);
+			}
+		}
 		return ret;
+	},
+
+	pseudolegals: function() {
+		return this.pseudolegal_piece_moves().concat(this.pseudolegal_pawn_moves());
 	},
 
 	pseudolegal_piece_moves: function() {
@@ -512,7 +520,7 @@ const board_prototype = {
 			}
 		}
 
-		return ret;
+		return ret.concat(this.pseudolegal_castling());
 	},
 
 	pseudolegal_pawn_moves: function() {
@@ -587,40 +595,7 @@ const board_prototype = {
 			}
 		}
 
-		return ret;
-	},
-
-	pseudolegal_ep_captures: function() {
-
-		// Very much assumes this.enpassant is correct.
-
-		let ret = [];
-
-		if (!this.enpassant) {
-			return ret;
-		}
-
-		let [epx, epy] = s_to_xy(this.enpassant);
-
-		if (epy === 2) {
-			if (epx > 0 && this.get(epx - 1, epy + 1) === "P") {
-				ret.push(xy_to_s(epx - 1, epy + 1) + this.enpassant);
-			}
-			if (epx < 7 && this.get(epx + 1, epy + 1) === "P") {
-				ret.push(xy_to_s(epx + 1, epy + 1) + this.enpassant);
-			}
-		}
-
-		if (epy === 5) {
-			if (epx > 0 && this.get(epx - 1, epy - 1) === "p") {
-				ret.push(xy_to_s(epx - 1, epy - 1) + this.enpassant);
-			}
-			if (epx < 7 && this.get(epx + 1, epy - 1) === "p") {
-				ret.push(xy_to_s(epx + 1, epy - 1) + this.enpassant);
-			}
-		}
-
-		return ret;
+		return ret.concat(this.pseudolegal_ep_captures());
 	},
 
 	pseudolegal_castling: function() {
@@ -713,10 +688,42 @@ const board_prototype = {
 		}
 
 		return ret;
-
 	},
 
-	can_capture_king: function() {
+	pseudolegal_ep_captures: function() {
+
+		// Very much assumes this.enpassant is correct.
+
+		let ret = [];
+
+		if (!this.enpassant) {
+			return ret;
+		}
+
+		let [epx, epy] = s_to_xy(this.enpassant);
+
+		if (epy === 2) {
+			if (epx > 0 && this.get(epx - 1, epy + 1) === "P") {
+				ret.push(xy_to_s(epx - 1, epy + 1) + this.enpassant);
+			}
+			if (epx < 7 && this.get(epx + 1, epy + 1) === "P") {
+				ret.push(xy_to_s(epx + 1, epy + 1) + this.enpassant);
+			}
+		}
+
+		if (epy === 5) {
+			if (epx > 0 && this.get(epx - 1, epy - 1) === "p") {
+				ret.push(xy_to_s(epx - 1, epy - 1) + this.enpassant);
+			}
+			if (epx < 7 && this.get(epx + 1, epy - 1) === "p") {
+				ret.push(xy_to_s(epx + 1, epy - 1) + this.enpassant);
+			}
+		}
+
+		return ret;
+	},
+
+	__can_capture_king: function() {
 
 		let opp_colour  = this.active === "w" ? "b" : "w";
 		let opp_king    = this.active === "w" ? "k" : "K";
@@ -730,18 +737,6 @@ const board_prototype = {
 				}
 			}
 		}
-	},
-
-	movegen: function() {
-		let pseudolegals = this.pseudolegals();
-		let ret = [];
-		for (let move of pseudolegals) {
-			let board = this.move(move);
-			if (!board.can_capture_king()) {
-				ret.push(move);
-			}
-		}
-		return ret;
 	},
 
 };
