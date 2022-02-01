@@ -122,6 +122,10 @@ const board_prototype = {
 		return this.active === "w" ? this.wk : this.bk;
 	},
 
+	inactive_king_index() {
+		return this.active === "w" ? this.bk : this.wk;
+	},
+
 	graphic: function() {
 		let units = [];
 		for (let y = 0; y < 8; y++) {
@@ -753,15 +757,7 @@ const board_prototype = {
 	},
 
 	__can_capture_king: function() {
-
-		// Will never be true in a real position, but this is a helper function for movegen()
-
-		let opp_index = this.active === "w" ? this.bk : this.wk
-		if (this.attacked(this.inactive(), opp_index)) {
-			return true;
-		} else {
-			return false;
-		}
+		return this.attacked(this.inactive(), this.inactive_king_index());
 	},
 
 	in_check: function() {
