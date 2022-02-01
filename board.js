@@ -1,5 +1,25 @@
 "use strict";
 
+function index_from_args(arg1, arg2) {
+
+	// A few things can be called with a variety of arg types...
+
+	let type1 = typeof(arg1);
+	let type2 = typeof(arg2);
+
+	if (type1 === "string") {
+		let a = arg1.charCodeAt(0);
+		let b = arg1.charCodeAt(1);
+		return (a - 97) + ((56 - b) * 8);
+	} else if (type1 === "number" && type2 === "number") {
+		return arg1 + (arg2 * 8);
+	} else if (type1 === "number" && type2 === "undefined") {
+		return arg1;
+	} else {
+		throw new Error(`index_from_args(${arg1}, ${arg2}): bad args`);
+	}
+}
+
 const mailbox = [
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -749,29 +769,6 @@ const board_prototype = {
 
 // ------------------------------------------------------------------------------------------------
 
-function replace_all(s, search, replace) {
-	if (!s.includes(search)) return s;				// Seems to improve speed overall
-	return s.split(search).join(replace);
-}
-
-function index_from_args(arg1, arg2) {				// For the normal len-64 arrays
-
-	let type1 = typeof(arg1);
-	let type2 = typeof(arg2);
-
-	if (type1 === "string") {
-		let a = arg1.charCodeAt(0);
-		let b = arg1.charCodeAt(1);
-		return (a - 97) + ((56 - b) * 8);
-	} else if (type1 === "number" && type2 === "number") {
-		return arg1 + (arg2 * 8);
-	} else if (type1 === "number" && type2 === "undefined") {
-		return arg1;
-	} else {
-		throw new Error(`index_from_args(${arg1}, ${arg2}): bad args`);
-	}
-}
-
 function s_to_xy(s) {
 	let x = s.charCodeAt(0) - 97;
 	let y = 56 - s.charCodeAt(1);
@@ -797,7 +794,9 @@ function xy_to_i(x, y) {
 function i_to_s(i) {
 	let x = i % 8;
 	let y = (i - x) / 8;
-	return xy_to_s(x, y);
+	let xs = String.fromCharCode(x + 97);
+	let ys = String.fromCharCode(56 - y);
+	return xs + ys;
 }
 
 function i_to_xy(i) {
@@ -805,6 +804,8 @@ function i_to_xy(i) {
 	let y = (i - x) / 8;
 	return [x, y];
 }
+
+// ------------------------------------------------------------------------------------------------
 
 function numbers_between(a, b) {					// Inclusive
 	let add = a < b ? 1 : -1;
@@ -814,6 +815,11 @@ function numbers_between(a, b) {					// Inclusive
 	}
 	ret.push(b);
 	return ret;
+}
+
+function replace_all(s, search, replace) {
+	if (!s.includes(search)) return s;				// Seems to improve speed overall
+	return s.split(search).join(replace);
 }
 
 // ------------------------------------------------------------------------------------------------
