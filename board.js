@@ -778,6 +778,12 @@ function s_to_xy(s) {
 	return [x, y];
 }
 
+function s_to_i(s) {
+	let x = s.charCodeAt(0) - 97;
+	let y = 56 - s.charCodeAt(1);
+	return x + y * 8;
+}
+
 function xy_to_s(x, y) {
 	let xs = String.fromCharCode(x + 97);
 	let ys = String.fromCharCode(56 - y);
