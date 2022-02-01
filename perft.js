@@ -93,5 +93,7 @@ exports.filetest = function() {
 		for (let item of bad_results) {
 			console.log(item);
 		}
+	} else {
+		console.log("\nALL OK");
 	}
 }
