@@ -685,8 +685,6 @@ const board_prototype = {
 
 	pseudolegal_ep_captures: function() {
 
-		// Very much assumes this.enpassant is correct.
-
 		let ret = [];
 
 		if (!this.enpassant) {
@@ -695,21 +693,21 @@ const board_prototype = {
 
 		let [epx, epy] = s_to_xy(this.enpassant);
 
-		if (epy === 2) {
-			if (epx > 0 && this.get(epx - 1, epy + 1) === "P") {
-				ret.push(xy_to_s(epx - 1, epy + 1) + this.enpassant);
-			}
-			if (epx < 7 && this.get(epx + 1, epy + 1) === "P") {
-				ret.push(xy_to_s(epx + 1, epy + 1) + this.enpassant);
-			}
-		}
-
-		if (epy === 5) {
+		if (this.active === "w" && epy === 5) {
 			if (epx > 0 && this.get(epx - 1, epy - 1) === "p") {
 				ret.push(xy_to_s(epx - 1, epy - 1) + this.enpassant);
 			}
 			if (epx < 7 && this.get(epx + 1, epy - 1) === "p") {
 				ret.push(xy_to_s(epx + 1, epy - 1) + this.enpassant);
+			}
+		}
+
+		if (this.active === "b" && epy === 2) {
+			if (epx > 0 && this.get(epx - 1, epy + 1) === "P") {
+				ret.push(xy_to_s(epx - 1, epy + 1) + this.enpassant);
+			}
+			if (epx < 7 && this.get(epx + 1, epy + 1) === "P") {
+				ret.push(xy_to_s(epx + 1, epy + 1) + this.enpassant);
 			}
 		}
 
