@@ -151,8 +151,10 @@ const board_prototype = {
 
 		for (let attack of rook_attacks) {
 			let mail = initial_mail;
+			let dist = 0;
 			while (true) {
 				mail += attack;
+				dist++;
 				let sq_index = mailbox[mail];
 				if (sq_index === -1) {
 					break;
@@ -161,12 +163,13 @@ const board_prototype = {
 				if (sq_piece === "") {
 					continue;
 				}
+				// At this point we've hit a piece so we're either returning true or breaking this attack loop.
 				if (defender_colour === "w") {
-					if (sq_piece === "q" || sq_piece === "r") {
+					if (sq_piece === "q" || sq_piece === "r" || (sq_piece === "k" && dist === 1)) {
 						return true;
 					}
 				} else {
-					if (sq_piece === "Q" || sq_piece === "R") {
+					if (sq_piece === "Q" || sq_piece === "R" || (sq_piece === "K" && dist === 1)) {
 						return true;
 					}
 				}
@@ -176,8 +179,10 @@ const board_prototype = {
 
 		for (let attack of bishop_attacks) {
 			let mail = initial_mail;
+			let dist = 0;
 			while (true) {
 				mail += attack;
+				dist++;
 				let sq_index = mailbox[mail];
 				if (sq_index === -1) {
 					break;
@@ -186,23 +191,18 @@ const board_prototype = {
 				if (sq_piece === "") {
 					continue;
 				}
+				// At this point we've hit a piece so we're either returning true or breaking this attack loop.
 				if (defender_colour === "w") {
-					if (sq_piece === "q" || sq_piece === "b") {
+					if (sq_piece === "q" || sq_piece === "b" || (sq_piece === "k" && dist === 1)) {
 						return true;
-					}
-					if (sq_piece === "p") {
-						if (mail - initial_mail === -9 || mail - initial_mail === -11) {
-							return true;
-						}
+					} else if (sq_piece === "p" && dist === 1 && (attack === -9 || attack === -11)) {
+						return true;
 					}
 				} else {
-					if (sq_piece === "Q" || sq_piece === "B") {
+					if (sq_piece === "Q" || sq_piece === "B" || (sq_piece === "K" && dist === 1)) {
 						return true;
-					}
-					if (sq_piece === "P") {
-						if (mail - initial_mail === 9 || mail - initial_mail === 11) {
-							return true;
-						}
+					} else if (sq_piece === "P" && dist === 1 && (attack === 9 || attack === 11)) {
+						return true;
 					}
 				}
 				break;
@@ -220,21 +220,6 @@ const board_prototype = {
 				return true;
 			}
 			if (sq_piece === "N" && defender_colour === "b") {
-				return true;
-			}
-		}
-
-		for (let attack of king_attacks) {			// Same as knights...
-			let mail = initial_mail + attack;
-			let sq_index = mailbox[mail];
-			if (sq_index === -1) {
-				continue;
-			}
-			let sq_piece = this.state[sq_index];
-			if (sq_piece === "k" && defender_colour === "w") {
-				return true;
-			}
-			if (sq_piece === "K" && defender_colour === "b") {
 				return true;
 			}
 		}
