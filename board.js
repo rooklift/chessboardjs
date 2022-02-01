@@ -61,7 +61,7 @@ function new_board(state = null, active = "w", castling = "", enpassant = null, 
 
 	ret.active = active;
 	ret.castling = castling;
-	ret.enpassant = enpassant;
+	ret.enpassant = enpassant;			// index (16-23 or 40-47) or null
 	ret.halfmove = halfmove;
 	ret.fullmove = fullmove;
 	ret.normalchess = normalchess;
@@ -276,7 +276,7 @@ const board_prototype = {
 
 		// FIXME: possibly implement book mode.
 
-		let ep_string = this.enpassant ? this.enpassant : "-";
+		let ep_string = this.enpassant ? i_to_s(this.enpassant) : "-";
 		let castling_string = this.castling !== "" ? this.castling : "-";
 
 		// While interally (and when sending to the engine) we always use Chess960 format,
@@ -396,13 +396,13 @@ const board_prototype = {
 
 		if (pawn_flag && y1 === 6 && y2 === 4) {		// White pawn advanced 2
 			if ((x1 > 0 && ret.get(x1 - 1, 4) === "p") || (x1 < 7 && ret.get(x1 + 1, 4) === "p")) {
-				ret.enpassant = xy_to_s(x1, 5);
+				ret.enpassant = xy_to_i(x1, 5);
 			}
 		}
 
 		if (pawn_flag && y1 === 1 && y2 === 3) {		// Black pawn advanced 2
 			if ((x1 > 0 && ret.get(x1 - 1, 3) === "P") || (x1 < 7 && ret.get(x1 + 1, 3) === "P")) {
-				ret.enpassant = xy_to_s(x1, 2);
+				ret.enpassant = xy_to_i(x1, 2);
 			}
 		}
 
@@ -701,23 +701,23 @@ const board_prototype = {
 			return ret;
 		}
 
-		let [epx, epy] = s_to_xy(this.enpassant);
+		let [epx, epy] = i_to_xy(this.enpassant);
 
 		if (this.active === "w" && epy === 2) {
 			if (epx > 0 && this.get(epx - 1, epy + 1) === "P") {
-				ret.push(xy_to_s(epx - 1, epy + 1) + this.enpassant);
+				ret.push(xy_to_s(epx - 1, epy + 1) + xs_to_s(epx, epy));
 			}
 			if (epx < 7 && this.get(epx + 1, epy + 1) === "P") {
-				ret.push(xy_to_s(epx + 1, epy + 1) + this.enpassant);
+				ret.push(xy_to_s(epx + 1, epy + 1) + xs_to_s(epx, epy));
 			}
 		}
 
 		if (this.active === "b" && epy === 5) {
 			if (epx > 0 && this.get(epx - 1, epy - 1) === "p") {
-				ret.push(xy_to_s(epx - 1, epy - 1) + this.enpassant);
+				ret.push(xy_to_s(epx - 1, epy - 1) + xs_to_s(epx, epy));
 			}
 			if (epx < 7 && this.get(epx + 1, epy - 1) === "p") {
-				ret.push(xy_to_s(epx + 1, epy - 1) + this.enpassant);
+				ret.push(xy_to_s(epx + 1, epy - 1) + xs_to_s(epx, epy));
 			}
 		}
 
@@ -1022,15 +1022,15 @@ function castling_rights(board, s) {					// s is the castling string from a FEN
 function fen_passant_square(board, s) {
 	if (board.active === "w" && ["a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6"].includes(s)) {
 		let col = s.charCodeAt(0) - 97;
-		if (board.get(col, 3) !== "p") return null;					// Check capturable pawn exists.
-		if (col > 0 && board.get(col - 1, 3) === "P") return s;		// Then check 2 ways a capturing
-		if (col < 7 && board.get(col + 1, 3) === "P") return s;		// pawn could exist.
+		if (board.get(col, 3) !== "p") return null;								// Check capturable pawn exists.
+		if (col > 0 && board.get(col - 1, 3) === "P") return s_to_i(s);			// Then check 2 ways a capturing
+		if (col < 7 && board.get(col + 1, 3) === "P") return s_to_i(s);			// pawn could exist.
 	}
 	if (board.active === "b" && ["a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3"].includes(s)) {
 		let col = s.charCodeAt(0) - 97;
 		if (board.get(col, 4) !== "P") return null;
-		if (col > 0 && board.get(col - 1, 4) === "p") return s;
-		if (col < 7 && board.get(col + 1, 4) === "p") return s;
+		if (col > 0 && board.get(col - 1, 4) === "p") return s_to_i(s);
+		if (col < 7 && board.get(col + 1, 4) === "p") return s_to_i(s);
 	}
 	return null;
 }
