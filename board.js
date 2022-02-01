@@ -716,6 +716,8 @@ const board_prototype = {
 
 	__can_capture_king: function() {
 
+		// Will never be true in a real position, but this is a helper function for movegen()
+
 		let opp_colour  = this.active === "w" ? "b" : "w";
 		let opp_king    = this.active === "w" ? "k" : "K";
 
@@ -1040,3 +1042,18 @@ function is_normal_chess(board) {
 	}
 	return true;
 }
+
+// ------------------------------------------------------------------------------------------------
+
+exports.wild = function(ply) {
+	let board = exports.new_board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+	for (let i = 0; i < ply; i++) {
+		let moves = board.movegen();
+		if (moves.length === 0) {
+			break;
+		}
+		let mv = moves[Math.floor(moves.length * Math.random())];
+		board = board.move(mv);
+	}
+	return board;
+};
