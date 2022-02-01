@@ -693,21 +693,21 @@ const board_prototype = {
 
 		let [epx, epy] = s_to_xy(this.enpassant);
 
-		if (this.active === "w" && epy === 5) {
-			if (epx > 0 && this.get(epx - 1, epy - 1) === "p") {
-				ret.push(xy_to_s(epx - 1, epy - 1) + this.enpassant);
-			}
-			if (epx < 7 && this.get(epx + 1, epy - 1) === "p") {
-				ret.push(xy_to_s(epx + 1, epy - 1) + this.enpassant);
-			}
-		}
-
-		if (this.active === "b" && epy === 2) {
+		if (this.active === "w" && epy === 2) {
 			if (epx > 0 && this.get(epx - 1, epy + 1) === "P") {
 				ret.push(xy_to_s(epx - 1, epy + 1) + this.enpassant);
 			}
 			if (epx < 7 && this.get(epx + 1, epy + 1) === "P") {
 				ret.push(xy_to_s(epx + 1, epy + 1) + this.enpassant);
+			}
+		}
+
+		if (this.active === "b" && epy === 5) {
+			if (epx > 0 && this.get(epx - 1, epy - 1) === "p") {
+				ret.push(xy_to_s(epx - 1, epy - 1) + this.enpassant);
+			}
+			if (epx < 7 && this.get(epx + 1, epy - 1) === "p") {
+				ret.push(xy_to_s(epx + 1, epy - 1) + this.enpassant);
 			}
 		}
 
