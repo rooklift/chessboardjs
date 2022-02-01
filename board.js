@@ -546,7 +546,7 @@ const board_prototype = {
 			let can_double_push = (piece === "P" && y1 === 6) || (piece === "p" && y1 === 1);
 
 			let mail = initial_mail + push;
-			let sq_index = mailbox[mail];									// We don't really need mailbox shennanigans, but use it for consistency.
+			let sq_index = mailbox[mail];				// We don't really need mailbox shennanigans, but use it for consistency.
 			let sq_piece = this.state[sq_index];
 			if (sq_piece === "") {
 				if (will_promote) {
@@ -782,7 +782,7 @@ function i_to_xy(i) {
 	return [x, y];
 }
 
-function numbers_between(a, b) {		// Inclusive
+function numbers_between(a, b) {					// Inclusive
 	let add = a < b ? 1 : -1;
 	let ret = [];
 	for (let x = a; x !== b; x += add) {
