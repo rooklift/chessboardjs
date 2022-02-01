@@ -193,16 +193,24 @@ const board_prototype = {
 				}
 				// At this point we've hit a piece so we're either returning true or breaking this attack loop.
 				if (defender_colour === "w") {
-					if (sq_piece === "q" || sq_piece === "b" || (sq_piece === "k" && dist === 1)) {
+					if (sq_piece === "q" || sq_piece === "b") {
 						return true;
-					} else if (sq_piece === "p" && dist === 1 && (attack === -9 || attack === -11)) {
-						return true;
+					} else if (dist === 1) {
+						if (sq_piece === "k") {
+							return true;
+						} else if (sq_piece === "p" && (attack === -9 || attack === -11)) {		// i.e. we're looking NE or NW along the line
+							return true;
+						}
 					}
 				} else {
-					if (sq_piece === "Q" || sq_piece === "B" || (sq_piece === "K" && dist === 1)) {
+					if (sq_piece === "Q" || sq_piece === "B") {
 						return true;
-					} else if (sq_piece === "P" && dist === 1 && (attack === 9 || attack === 11)) {
-						return true;
+					} else if (dist === 1) {
+						if (sq_piece === "K") {
+							return true;
+						} else if (sq_piece === "P" && (attack === 9 || attack === 11)) {		// i.e. we're looking SW or SE along the line
+							return true;
+						}
 					}
 				}
 				break;
