@@ -1032,26 +1032,20 @@ function fen_passant_square(board, s) {
 }
 
 function is_normal_chess(board) {
-
 	for (let ch of "bcdefgBCDEFG") {
 		if (board.castling.includes(ch)) {
 			return false;
 		}
 	}
-
 	if (board.castling.includes("A") || board.castling.includes("H")) {
 		if (board.get("e1") !== "K") {
 			return false;
 		}
 	}
-
 	if (board.castling.includes("a") || board.castling.includes("h")) {
 		if (board.get("e8") !== "k") {
 			return false;
 		}
 	}
-
-	// So it can be considered a normal Chess position.
-
 	return true;
 }
