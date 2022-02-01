@@ -115,7 +115,6 @@ const board_prototype = {
 	inactive: function() {
 		if (this.active === "w") return "b";
 		if (this.active === "b") return "w";
-		throw new Error("inactive(): bad active");
 	},
 
 	active_king_index() {
