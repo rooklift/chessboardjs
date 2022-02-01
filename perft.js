@@ -49,8 +49,7 @@ function perft_recurse(pos, depth, print_moves) {
 }
 
 function perft_print_move(pos, mv, val) {
-	// let nice = pos.nice_string(mv);
-	let nice = mv;
+	let nice = pos.nice_string(mv);
 	console.log(`${mv + (mv.length === 4 ? " " : "")}   ${nice + " ".repeat(7 - nice.length)}`, val);
 }
 
