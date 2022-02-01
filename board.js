@@ -40,7 +40,7 @@ const black_p_caps = [11, 9];
 
 // ------------------------------------------------------------------------------------------------
 
-function new_board(state = null, active = "w", castling = "", enpassant = null, halfmove = 0, fullmove = 1, normalchess = false) {
+function new_board(state = null, active = "w", castling = "", enpassant = null, halfmove = 0, fullmove = 1, normalchess = false, wk = null, bk = null) {
 
 	let ret = Object.create(board_prototype);
 
@@ -66,23 +66,36 @@ function new_board(state = null, active = "w", castling = "", enpassant = null, 
 	ret.fullmove = fullmove;
 	ret.normalchess = normalchess;
 
+	ret.wk = wk;						// index (0-63) of K
+	ret.bk = bk;						// index (0-63) of k
+	if (wk !== null && ret.state[wk] !== "K") throw new Error("wk error");
+	if (bk !== null && ret.state[bk] !== "k") throw new Error("bk error");
+
 	return ret;
 }
 
 const board_prototype = {
 
 	copy: function() {
-		return new_board(this.state, this.active, this.castling, this.enpassant, this.halfmove, this.fullmove, this.normalchess);
+		return new_board(this.state, this.active, this.castling, this.enpassant, this.halfmove, this.fullmove, this.normalchess, this.wk, this.bk);
 	},
 
-	get: function(arg1, arg2) {										// get(2, 3) or get("c6") are equivalent
+	get: function(arg1, arg2) {										// Can call with "h1" or (7, 7) or (63)
 		let index = index_from_args(arg1, arg2);
 		return this.state[index];
 	},
 
-	set: function(c, arg1, arg2) {									// set("R", 2, 3) or set("R", "c6") are equivalent
+	set: function(c, arg1, arg2) {
 		let index = index_from_args(arg1, arg2);
 		this.state[index] = c;
+		if (c === "K") this.wk = index;
+		if (c === "k") this.bk = index;
+	},
+
+	inactive: function() {
+		if (this.active === "w") return "b";
+		if (this.active === "b") return "w";
+		throw new Error("inactive(): bad active");
 	},
 
 	graphic: function() {
@@ -412,7 +425,7 @@ const board_prototype = {
 
 		// Swap active...
 
-		ret.active = this.active === "w" ? "b" : "w";
+		ret.active = this.inactive();
 		return ret;
 	},
 
@@ -614,20 +627,17 @@ const board_prototype = {
 			return ret;
 		}
 
-		let x1y1;
+		let x1;									// king start x
+		let y1;									// king start y
 
 		if (this.active === "w") {
-			x1y1 = this.find("K", 0, 7, 7, 7)[0];
+			[x1, y1] = i_to_xy(this.wk);
 		} else {
-			x1y1 = this.find("k", 0, 0, 7, 0)[0];
+			[x1, y1] = i_to_xy(this.bk);
 		}
 
-		if (!x1y1) {
-			return ret;
-		}
-
-		let x1 = x1y1[0];						// king start x
-		let y1 = x1y1[1];						// king start y
+		if (this.active === "w" && y1 !== 7) return ret;
+		if (this.active === "b" && y1 !== 0) return ret;
 
 		for (let x2 of possible_rook_x) {		// rook start x
 
@@ -718,17 +728,11 @@ const board_prototype = {
 
 		// Will never be true in a real position, but this is a helper function for movegen()
 
-		let opp_colour  = this.active === "w" ? "b" : "w";
-		let opp_king    = this.active === "w" ? "k" : "K";
-
-		for (let i = 0; i < 64; i++) {
-			if (this.state[i] === (opp_king)) {
-				if (this.attacked(opp_colour, ...i_to_xy(i))) {
-					return true;
-				} else {
-					return false;
-				}
-			}
+		let opp_index = this.active === "w" ? this.bk : this.wk
+		if (this.attacked(this.inactive(), opp_index)) {
+			return true;
+		} else {
+			return false;
 		}
 	},
 
@@ -751,12 +755,20 @@ function replace_all(s, search, replace) {
 }
 
 function index_from_args(arg1, arg2) {				// For the normal len-64 arrays
-	if (typeof(arg1) === "string") {
+
+	let type1 = typeof(arg1);
+	let type2 = typeof(arg2);
+
+	if (type1 === "string") {
 		let a = arg1.charCodeAt(0);
 		let b = arg1.charCodeAt(1);
 		return (a - 97) + ((56 - b) * 8);
-	} else {
+	} else if (type1 === "number" && type2 === "number") {
 		return arg1 + (arg2 * 8);
+	} else if (type1 === "number" && type2 === "undefined") {
+		return arg1;
+	} else {
+		throw new Error(`index_from_args(${arg1}, ${arg2}): bad args`);
 	}
 }
 
@@ -884,10 +896,9 @@ exports.new_board_from_fen = function(fen) {
 		throw "Invalid FEN - number of kings";
 	}
 
-	let opponent_king_char = ret.active === "w" ? "k" : "K";
-	let [opponent_king_x, opponent_king_y] = ret.find(opponent_king_char)[0];
+	let opp_k_index = ret.active === "w" ? ret.bk : ret.wk;
 
-	if (ret.attacked(ret.active === "w" ? "b" : "w", opponent_king_x, opponent_king_y)) {
+	if (ret.attacked(ret.inactive(), opp_k_index)) {
 		throw new Error("Invalid FEN - non-mover's king in check");
 	}
 
@@ -906,9 +917,9 @@ function castling_rights(board, s) {					// s is the castling string from a FEN
 
 	// WHITE
 
-	let wk_location = board.find("K", 0, 7, 7, 7)[0];	// Will be undefined if not on back rank.
+	let [wkx, wky] = i_to_xy(board.wk);
 
-	if (wk_location) {
+	if (wky === 7) {
 
 		for (let ch of s) {
 			if (["A", "B", "C", "D", "E", "F", "G", "H"].includes(ch)) {
@@ -951,9 +962,9 @@ function castling_rights(board, s) {					// s is the castling string from a FEN
 
 	// BLACK
 
-	let bk_location = board.find("k", 0, 0, 7, 0)[0];
+	let [bkx, bky] = i_to_xy(board.bk);
 
-	if (bk_location) {
+	if (bky === 0) {
 
 		for (let ch of s) {
 			if (["a", "b", "c", "d", "e", "f", "g", "h"].includes(ch)) {
