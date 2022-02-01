@@ -784,6 +784,10 @@ function xy_to_s(x, y) {
 	return xs + ys;
 }
 
+function xy_to_i(x, y) {
+	return x + y * 8;
+}
+
 function i_to_s(i) {
 	let x = i % 8;
 	let y = (i - x) / 8;
