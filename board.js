@@ -347,7 +347,6 @@ const board_prototype = {
 		let [x2, y2] = s_to_xy(target);
 		let source_piece = this.get(x1, y1);
 		let target_piece = this.get(x2, y2);
-		let promotion_char = (s.length > 4) ? s[4].toLowerCase() : "q";		// But caller shouldn't send promotion move without promotion char? Hmm.
 
 		let ret = this.copy();
 
@@ -443,11 +442,11 @@ const board_prototype = {
 		// Handle promotions...
 
 		if (y2 === 0 && pawn_flag) {
-			ret.set(promotion_char.toUpperCase(), x2, y2);
+			ret.set(s[4].toUpperCase(), x2, y2);		// Will throw if s.length === 4, that's fine.
 		}
 
 		if (y2 === 7 && pawn_flag) {
-			ret.set(promotion_char.toLowerCase(), x2, y2);
+			ret.set(s[4].toLowerCase(), x2, y2);
 		}
 
 		// Swap active...
