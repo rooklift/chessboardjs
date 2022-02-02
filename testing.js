@@ -96,3 +96,20 @@ exports.filetest = function() {
 		console.log("\nALL OK");
 	}
 }
+
+exports.startpos = function() {
+	return boardjs.new_board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+}
+
+exports.wild = function(ply) {
+	let board = boardjs.new_board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+	for (let i = 0; i < ply; i++) {
+		let moves = board.movegen();
+		if (moves.length === 0) {
+			break;
+		}
+		let mv = moves[Math.floor(moves.length * Math.random())];
+		board = board.move(mv);
+	}
+	return board;
+};
