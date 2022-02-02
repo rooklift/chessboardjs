@@ -987,6 +987,166 @@ const board_prototype = {
 		return (this.active === "w") ? `${this.fullmove}.` : `${this.fullmove}...`;
 	},
 
+	parse_pgn: function(s) {		// Returns a UCI move and an error message.
+
+		// Replace fruity dash characters with proper ASCII dash "-"
+
+		for (let n of [8208, 8210, 8211, 8212, 8213, 8722]) {
+			s = replace_all(s, String.fromCodePoint(n), "-");
+		}
+
+		// Delete things we don't need...
+
+		s = replace_all(s, "x", "");
+		s = replace_all(s, "+", "");
+		s = replace_all(s, "#", "");
+		s = replace_all(s, "!", "");
+		s = replace_all(s, "?", "");
+
+		// If the string contains any dots it'll be something like "1.e4" or "...e4" or whatnot...
+
+		let lio = s.lastIndexOf(".");
+		if (lio !== -1) {
+			s = s.slice(lio + 1);
+		}
+
+		// Fix castling with zeroes...
+
+		s = replace_all(s, "0-0-0", "O-O-O");
+		s = replace_all(s, "0-0", "O-O");
+
+		if (s.toUpperCase() === "O-O") {
+
+			let mv = this.find_castling_move(false);		// FIXME
+
+			if (mv && !this.illegal(mv)) {
+				return [mv, ""];
+			} else {
+				return ["", "illegal castling"];
+			}
+		}
+
+		if (s.toUpperCase() === "O-O-O") {
+
+			let mv = this.find_castling_move(true);			// FIXME
+
+			if (mv && !this.illegal(mv)) {
+				return [mv, ""];
+			} else {
+				return ["", "illegal castling"];
+			}
+		}
+
+		// Just in case, delete any "-" characters (after handling castling, of course)...
+
+		s = replace_all(s, "-", "");
+
+		// If an = sign is present, save promotion string, then delete it from s...
+
+		let promotion = "";
+
+		if (s[s.length - 2] === "=") {
+			promotion = s[s.length - 1].toLowerCase();
+			s = s.slice(0, -2);
+		}
+
+		// A lax writer might also write the promotion string without an equals sign...
+
+		if (promotion === "") {
+			if (["Q", "R", "B", "N", "q", "r", "b", "n"].includes(s[s.length - 1])) {
+				promotion = s[s.length - 1].toLowerCase();
+				s = s.slice(0, -1);
+			}
+		}
+
+		// If the piece isn't specified (with an uppercase letter) then it's a pawn move.
+		// Let's add P to the start of the string to keep the string format consistent...
+
+		if (["K", "Q", "R", "B", "N", "P"].includes(s[0]) === false) {
+			s = "P" + s;
+		}
+
+		// Now this works...
+
+		let piece = s[0];
+
+		// We care about the colour of the piece, so make black pieces lowercase...
+
+		if (this.active === "b") {
+			piece = piece.toLowerCase();
+		}
+
+		// The last 2 characters specify the target point. We've removed all trailing
+		// garbage that could interfere with this fact.
+
+		let dest = s.slice(s.length - 2, s.length);
+		if (!valid_coord(dest)) {
+			return ["", "invalid destination"];
+		}
+
+		// Any characters between the piece and target should be disambiguators...
+
+		let disambig = s.slice(1, -2);
+
+		let startx = 0;
+		let endx = 7;
+
+		let starty = 0;
+		let endy = 7;
+
+		for (let c of disambig) {
+			if ("a" <= c && c <= "h") {
+				startx = c.charCodeAt(0) - 97;
+				endx = startx;
+			}
+			if ("1" <= c && c <= "8") {
+				starty = 7 - (c.charCodeAt(0) - 49);
+				endy = starty;
+			}
+		}
+
+		// If it's a pawn and hasn't been disambiguated then it is moving forwards...
+
+		if (piece === "P" || piece === "p") {
+			if (disambig.length === 0) {
+				startx = s_to_xy(dest)[0];
+				endx = startx;
+			}
+		}
+
+		let sources = this.find(piece, startx, starty, endx, endy);
+
+		if (sources.length === 0) {
+			return ["", "piece not found"];
+		}
+
+		let possible_moves = [];
+
+		for (let source of sources) {
+			possible_moves.push(i_to_s(source) + dest + promotion);
+		}
+
+		let valid_moves = [];
+
+		for (let move of possible_moves) {
+			if (this.illegal(move) === "") {
+				valid_moves.push(move);
+			}
+		}
+
+		if (valid_moves.length === 1) {
+			return [valid_moves[0], ""];
+		}
+
+		if (valid_moves.length === 0) {
+			return ["", "piece found but move illegal"];
+		}
+
+		if (valid_moves.length > 1) {
+			return ["", `ambiguous moves: [${valid_moves}]`];
+		}
+	},
+
 };
 
 // ------------------------------------------------------------------------------------------------
