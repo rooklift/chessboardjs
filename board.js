@@ -166,7 +166,7 @@ const board_prototype = {
 	find: function(piece, startx, starty, endx, endy) {
 
 		// Find all pieces of the specified type (colour-specific).
-		// Search range is INCLUSIVE. Result returned as a list of points.
+		// Search range is INCLUSIVE. Result returned as a list of indices.
 		// You can call this function with just a piece to search the whole board.
 
 		if (startx === undefined) startx = 0;
