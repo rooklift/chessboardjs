@@ -121,6 +121,17 @@ const board_prototype = {
 		if (c === "k") this.bk = index;
 	},
 
+	colour: function(arg1, arg2) {
+		let piece = this.get(arg1, arg2);
+		if (piece === "") {
+			return "";
+		} else if (piece === "K" || piece === "Q" || piece === "R" || piece === "B" || piece === "N" || piece === "P") {
+			return "w";
+		} else {
+			return "b";
+		}
+	},
+
 	inactive: function() {
 		if (this.active === "w") return "b";
 		if (this.active === "b") return "w";
@@ -494,24 +505,34 @@ const board_prototype = {
 		this.castling = new_rights;
 	},
 
-	movegen: function() {
-
-		let pseudolegals = [];
+	no_moves: function() {
 
 		for (let i = 0; i < 64; i++) {
 			if (this.state[i]) {
 				for (let move of this.pseudolegals(i)) {
-					pseudolegals.push(move);
+					let board = this.move(move);
+					if (!board.__can_capture_king()) {
+						return false;
+					}
 				}
 			}
 		}
 
+		return true;
+	},
+
+	movegen: function() {
+
 		let ret = [];
 
-		for (let move of pseudolegals) {
-			let board = this.move(move);
-			if (!board.__can_capture_king()) {
-				ret.push(move);
+		for (let i = 0; i < 64; i++) {
+			if (this.state[i]) {
+				for (let move of this.pseudolegals(i)) {
+					let board = this.move(move);
+					if (!board.__can_capture_king()) {
+						ret.push(move);
+					}
+				}
 			}
 		}
 
@@ -520,15 +541,13 @@ const board_prototype = {
 
 	pseudolegals: function(i) {
 
-		let piece = this.state[i];
-		if (piece === "") {					// Don't remove this test. Potentially relied upon by more than just movegen().
+		// Don't assume anything about what's on i.
+
+		if (this.colour(i) !== this.active) {
 			return [];
 		}
 
-		let friendlies = (this.active === "w") ? ["K","Q","R","B","N","P"] : ["k","q","r","b","n","p"];
-		if (friendlies.includes(piece) === false) {
-			return [];
-		}
+		let piece = this.get(i);
 
 		if (piece === "P" || piece === "p") {
 			return this.__pseudolegal_pawn_moves(i);
@@ -550,7 +569,6 @@ const board_prototype = {
 		let piece = this.state[i];
 		let push = (this.active === "w") ? white_p_push : black_p_push;
 		let attack_array = (this.active === "w") ? white_p_caps : black_p_caps;
-		let enemies = (this.active === "w") ? ["k","q","r","b","n","p"] : ["K","Q","R","B","N","P"];
 
 		let initial_mail = mailbox64[i];
 
@@ -592,19 +610,17 @@ const board_prototype = {
 				continue;
 			}
 
-			if (sq_index === this.enpassant) {					// This is a valid e.p. capture.
+			if (sq_index === this.enpassant) {							// This is a valid e.p. capture.
 				ret.push(i_to_s(i) + i_to_s(sq_index));
-			} else {
+			} else if (this.colour(sq_index) === this.inactive()) {		// Can't just test !== this.active, because the colour can be ""
 				sq_piece = this.state[sq_index];
-				if (enemies.includes(sq_piece)) {
-					if (will_promote) {
-						ret.push(i_to_s(i) + i_to_s(sq_index) + "q");
-						ret.push(i_to_s(i) + i_to_s(sq_index) + "r");
-						ret.push(i_to_s(i) + i_to_s(sq_index) + "b");
-						ret.push(i_to_s(i) + i_to_s(sq_index) + "n");
-					} else {
-						ret.push(i_to_s(i) + i_to_s(sq_index));
-					}
+				if (will_promote) {
+					ret.push(i_to_s(i) + i_to_s(sq_index) + "q");
+					ret.push(i_to_s(i) + i_to_s(sq_index) + "r");
+					ret.push(i_to_s(i) + i_to_s(sq_index) + "b");
+					ret.push(i_to_s(i) + i_to_s(sq_index) + "n");
+				} else {
+					ret.push(i_to_s(i) + i_to_s(sq_index));
 				}
 			}
 		}
@@ -774,10 +790,6 @@ const board_prototype = {
 		if (s === "e8g8" && this.get(4, 0) === "k" && this.castling.includes("g") === false) return "e8h8";
 		if (s === "e8c8" && this.get(4, 0) === "k" && this.castling.includes("c") === false) return "e8a8";
 		return s;
-	},
-
-	no_moves: function() {
-		return this.movegen().length === 0;			// FIXME: ideally short-circuit the movegen asap
 	},
 
 	illegal: function(s) {
