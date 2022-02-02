@@ -88,8 +88,8 @@ function new_board(state = null, active = "w", castling = "", enpassant = null, 
 
 	ret.wk = wk;						// index (0-63) of K
 	ret.bk = bk;						// index (0-63) of k
-	if (wk !== null && ret.state[wk] !== "K") throw new Error("wk error");
-	if (bk !== null && ret.state[bk] !== "k") throw new Error("bk error");
+	if (wk !== null && ret.state[wk] !== "K") throw new Error("wk error");		// This would be insidious enough
+	if (bk !== null && ret.state[bk] !== "k") throw new Error("bk error");		// that it's worth checking...
 
 	return ret;
 }
@@ -486,137 +486,106 @@ const board_prototype = {
 	},
 
 	movegen: function() {
-		if (Array.isArray(this.__movegen_cache)) {			// FIXME - don't want this.
-			return Array.from(this.__movegen_cache);
+
+		let pseudolegals = [];
+
+		for (let i = 0; i < 64; i++) {
+			if (this.state[i]) {
+				for (let move of this.pseudolegals(i)) {
+					pseudolegals.push(move);
+				}
+			}
 		}
-		let pseudolegals = this.pseudolegals();
+
 		let ret = [];
+
 		for (let move of pseudolegals) {
 			let board = this.move(move);
 			if (!board.__can_capture_king()) {
 				ret.push(move);
 			}
 		}
-		this.__movegen_cache = Array.from(ret);
+
 		return ret;
 	},
 
-	pseudolegals: function() {
-		return this.pseudolegal_piece_moves().concat(this.pseudolegal_pawn_moves());
+	pseudolegals: function(i) {
+
+		let piece = this.state[i];
+		if (piece === "") {
+			return [];
+		}
+
+		let friendlies = (this.active === "w") ? ["K","Q","R","B","N","P"] : ["k","q","r","b","n","p"];
+		if (friendlies.includes(piece) === false) {
+			return [];
+		}
+
+		if (piece === "P" || piece === "p") {
+			return this.__pseudolegal_pawn_moves(i);
+		} else {
+			let ret = this.__pseudolegal_piece_moves(i);
+			if (piece === "K" || piece === "k") {
+				ret = ret.concat(this.__pseudolegal_castling(i));
+			}
+			return ret;
+		}
 	},
 
-	pseudolegal_piece_moves: function() {
+	__pseudolegal_pawn_moves: function(i) {
+
+		// Can assume there really is a pawn of active colour on i.
 
 		let ret = [];
 
-		let friendlies = (this.active === "w") ? ["K","Q","R","B","N","P"] : ["k","q","r","b","n","p"];
+		let piece = this.state[i];
+		let push = (this.active === "w") ? white_p_push : black_p_push;
+		let attack_array = (this.active === "w") ? white_p_caps : black_p_caps;
+		let enemies = (this.active === "w") ? ["k","q","r","b","n","p"] : ["K","Q","R","B","N","P"];
 
-		for (let i = 0; i < 64; i++) {
+		let initial_mail = mailbox64[i];
 
-			let piece = this.state[i];
+		let will_promote    = (piece === "P" && i <= 15) || (piece === "p" && i >= 48);
+		let can_double_push = (piece === "P" && i >= 48) || (piece === "p" && i <= 15);
 
-			if (!friendlies.includes(piece) || piece === "P" || piece === "p") {
-				continue;
-			}
+		// Pushes...
 
-			let initial_mail = mailbox64[i];
-
-			let attack_array;
-			let fast_break;
-
-			switch (piece) {
-				case "K": case "k":  attack_array =   king_attacks;  fast_break =  true;  break;
-				case "Q": case "q":  attack_array =  queen_attacks;  fast_break = false;  break;
-				case "R": case "r":  attack_array =   rook_attacks;  fast_break = false;  break;
-				case "B": case "b":  attack_array = bishop_attacks;  fast_break = false;  break;
-				case "N": case "n":  attack_array = knight_attacks;  fast_break =  true;  break;
-			}
-
-			for (let attack of attack_array) {
-				let mail = initial_mail;
-				while (true) {
-					mail += attack;
-					let sq_index = mailbox[mail];
-					if (sq_index === -1) {
-						break;
-					}
-					let sq_piece = this.state[sq_index];
-					if (this.state[sq_index] === "") {							// Moving to empty
+		let mail = initial_mail + push;
+		let sq_index = mailbox[mail];				// We don't really need mailbox shennanigans, but use it for consistency.
+		let sq_piece = this.state[sq_index];
+		if (sq_piece === "") {
+			if (will_promote) {
+				ret.push(i_to_s(i) + i_to_s(sq_index) + "q");
+				ret.push(i_to_s(i) + i_to_s(sq_index) + "r");
+				ret.push(i_to_s(i) + i_to_s(sq_index) + "b");
+				ret.push(i_to_s(i) + i_to_s(sq_index) + "n");
+			} else {
+				ret.push(i_to_s(i) + i_to_s(sq_index));
+				if (can_double_push) {
+					mail += push;
+					sq_index = mailbox[mail];
+					sq_piece = this.state[sq_index];
+					if (sq_piece === "") {
 						ret.push(i_to_s(i) + i_to_s(sq_index));
-						if (fast_break) {
-							break;
-						}
-					} else if (friendlies.includes(this.state[sq_index])) {		// Blocked by friendly
-						break;
-					} else {													// Capture
-						ret.push(i_to_s(i) + i_to_s(sq_index));
-						break;
 					}
 				}
 			}
 		}
 
-		return ret.concat(this.pseudolegal_castling());
-	},
+		// Captures...
 
-	pseudolegal_pawn_moves: function() {
+		for (let attack of attack_array) {
 
-		let ret = [];
+			let mail = initial_mail + attack;
 
-		let my_pawn = (this.active === "w") ? "P" : "p";
-		let push    = (this.active === "w") ? white_p_push : black_p_push;
-		let enemies = (this.active === "w") ? ["k","q","r","b","n","p"] : ["K","Q","R","B","N","P"];
-
-		for (let i = 0; i < 64; i++) {
-
-			let piece = this.state[i];
-
-			if (piece !== my_pawn) {
+			let sq_index = mailbox[mail];
+			if (sq_index === -1) {
 				continue;
 			}
 
-			let initial_mail = mailbox64[i];
-			let [x1, y1] = i_to_xy(i);
-
-			let will_promote    = (piece === "P" && y1 === 1) || (piece === "p" && y1 === 6);
-			let can_double_push = (piece === "P" && y1 === 6) || (piece === "p" && y1 === 1);
-
-			let mail = initial_mail + push;
-			let sq_index = mailbox[mail];				// We don't really need mailbox shennanigans, but use it for consistency.
-			let sq_piece = this.state[sq_index];
-			if (sq_piece === "") {
-				if (will_promote) {
-					ret.push(i_to_s(i) + i_to_s(sq_index) + "q");
-					ret.push(i_to_s(i) + i_to_s(sq_index) + "r");
-					ret.push(i_to_s(i) + i_to_s(sq_index) + "b");
-					ret.push(i_to_s(i) + i_to_s(sq_index) + "n");
-				} else {
-					ret.push(i_to_s(i) + i_to_s(sq_index));
-					if (can_double_push) {
-						mail += push;
-						sq_index = mailbox[mail];
-						sq_piece = this.state[sq_index];
-						if (sq_piece === "") {
-							ret.push(i_to_s(i) + i_to_s(sq_index));
-						}
-					}
-				}
-			}
-
-			// Captures (not including e.p. captures)...
-
-			let attack_array = white_p_caps;
-			if (piece === "p") attack_array = black_p_caps;
-
-			for (let attack of attack_array) {
-
-				let mail = initial_mail + attack;
-
-				let sq_index = mailbox[mail];
-				if (sq_index === -1) {
-					continue;
-				}
-
+			if (sq_index === this.enpassant) {					// This is a valid e.p. capture.
+				ret.push(i_to_s(i) + i_to_s(sq_index));
+			} else {
 				sq_piece = this.state[sq_index];
 				if (enemies.includes(sq_piece)) {
 					if (will_promote) {
@@ -631,12 +600,71 @@ const board_prototype = {
 			}
 		}
 
-		return ret.concat(this.pseudolegal_ep_captures());
+		return ret;
 	},
 
-	pseudolegal_castling: function() {
+	__pseudolegal_piece_moves: function(i) {
+
+		// Can assume there really is a piece of active colour on i.
 
 		let ret = [];
+
+		let friendlies = (this.active === "w") ? ["K","Q","R","B","N","P"] : ["k","q","r","b","n","p"];
+
+		let piece = this.state[i];
+		let initial_mail = mailbox64[i];
+
+		let attack_array;
+		let fast_break;
+
+		switch (piece) {
+			case "K": case "k":  attack_array =   king_attacks;  fast_break =  true;  break;
+			case "Q": case "q":  attack_array =  queen_attacks;  fast_break = false;  break;
+			case "R": case "r":  attack_array =   rook_attacks;  fast_break = false;  break;
+			case "B": case "b":  attack_array = bishop_attacks;  fast_break = false;  break;
+			case "N": case "n":  attack_array = knight_attacks;  fast_break =  true;  break;
+		}
+
+		for (let attack of attack_array) {
+			let mail = initial_mail;
+			while (true) {
+				mail += attack;
+				let sq_index = mailbox[mail];
+				if (sq_index === -1) {
+					break;
+				}
+				let sq_piece = this.state[sq_index];
+				if (this.state[sq_index] === "") {							// Moving to empty
+					ret.push(i_to_s(i) + i_to_s(sq_index));
+					if (fast_break) {
+						break;
+					}
+				} else if (friendlies.includes(this.state[sq_index])) {		// Blocked by friendly
+					break;
+				} else {													// Capture
+					ret.push(i_to_s(i) + i_to_s(sq_index));
+					break;
+				}
+			}
+		}
+
+		return ret;
+	},
+
+	__pseudolegal_castling: function(i) {
+
+		// Can assume there really is a king of active colour on i.
+
+		let piece = this.state[i];
+
+		if (piece === "K") {
+			if (i < 56) return [];
+		} else {
+			if (i > 7) return [];
+		}
+
+		// So it's on the back rank...
+
 		let possible_rook_x = [];
 
 		if (this.active === "w") {
@@ -654,7 +682,7 @@ const board_prototype = {
 		}
 
 		if (possible_rook_x.length === 0) {
-			return ret;
+			return [];
 		}
 
 		let x1;									// king start x
@@ -666,8 +694,7 @@ const board_prototype = {
 			[x1, y1] = i_to_xy(this.bk);
 		}
 
-		if (this.active === "w" && y1 !== 7) return ret;
-		if (this.active === "b" && y1 !== 0) return ret;
+		let ret = [];
 
 		for (let x2 of possible_rook_x) {		// rook start x
 
@@ -717,37 +744,6 @@ const board_prototype = {
 
 			if (ok) {
 				ret.push(xy_to_s(x1, y1) + xy_to_s(x2, y1));
-			}
-		}
-
-		return ret;
-	},
-
-	pseudolegal_ep_captures: function() {
-
-		let ret = [];
-
-		if (!this.enpassant) {
-			return ret;
-		}
-
-		let [epx, epy] = i_to_xy(this.enpassant);
-
-		if (this.active === "w" && epy === 2) {
-			if (epx > 0 && this.get(epx - 1, epy + 1) === "P") {
-				ret.push(xy_to_s(epx - 1, epy + 1) + xy_to_s(epx, epy));
-			}
-			if (epx < 7 && this.get(epx + 1, epy + 1) === "P") {
-				ret.push(xy_to_s(epx + 1, epy + 1) + xy_to_s(epx, epy));
-			}
-		}
-
-		if (this.active === "b" && epy === 5) {
-			if (epx > 0 && this.get(epx - 1, epy - 1) === "p") {
-				ret.push(xy_to_s(epx - 1, epy - 1) + xy_to_s(epx, epy));
-			}
-			if (epx < 7 && this.get(epx + 1, epy - 1) === "p") {
-				ret.push(xy_to_s(epx + 1, epy - 1) + xy_to_s(epx, epy));
 			}
 		}
 
