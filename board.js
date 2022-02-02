@@ -86,6 +86,9 @@ function new_board(state = null, active = "w", castling = "", enpassant = null, 
 	ret.fullmove = fullmove;
 	ret.normalchess = normalchess;
 
+	// We store the white and black king locations.
+	// We rely on the fact that state is only ever mutated by this.set() which adjusts these as required.
+
 	ret.wk = wk;						// index (0-63) of K
 	ret.bk = bk;						// index (0-63) of k
 	if (wk !== null && ret.state[wk] !== "K") throw new Error("wk error");		// This would be insidious enough
@@ -1070,9 +1073,7 @@ exports.new_board_from_fen = function(fen) {
 		throw "Invalid FEN - number of kings";
 	}
 
-	let opp_k_index = ret.active === "w" ? ret.bk : ret.wk;
-
-	if (ret.attacked(ret.inactive(), opp_k_index)) {
+	if (ret.attacked(ret.inactive(), ret.inactive_king_index())) {
 		throw new Error("Invalid FEN - non-mover's king in check");
 	}
 
