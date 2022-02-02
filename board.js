@@ -750,12 +750,6 @@ const board_prototype = {
 
 	__castling_target_columns: function() {		// Returns a list as integers 0-7
 
-		if (this.active === "w") {
-			if (this.wk < 56) return [];		// These checks are rather redundant
-		} else {								// unless this.castling is corrupt...
-			if (this.bk > 7) return [];
-		}
-
 		let ret = [];
 
 		if (this.active === "w") {
