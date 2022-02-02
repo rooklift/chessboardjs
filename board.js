@@ -62,6 +62,14 @@ const black_p_caps = [11, 9];
 
 function new_board(state = null, active = "w", castling = "", enpassant = null, halfmove = 0, fullmove = 1, normalchess = false, wk = null, bk = null) {
 
+	// Dangers:
+	//
+	// - Some functions -- new_board_from_fen() and move() -- are allowed to mutate things
+	//   while updating, which means they have a board which is invalid for some time.
+	//
+	// - wk and bk need to be kept in sync with state. Currently this is managed by only
+	//   ever adjusting state via set() which does that automatically.
+
 	let ret = Object.create(board_prototype);
 
 	if (state) {
@@ -91,8 +99,6 @@ function new_board(state = null, active = "w", castling = "", enpassant = null, 
 
 	ret.wk = wk;						// index (0-63) of K
 	ret.bk = bk;						// index (0-63) of k
-	if (wk !== null && ret.state[wk] !== "K") throw new Error("wk error");		// This would be insidious enough
-	if (bk !== null && ret.state[bk] !== "k") throw new Error("bk error");		// that it's worth checking...
 
 	return ret;
 }
