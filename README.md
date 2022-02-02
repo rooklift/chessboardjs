@@ -1,5 +1,7 @@
 Chess960 board structure with useful methods. Somewhat derived from [Nibbler](https://github.com/rooklift/nibbler).
 
+Everything useful is in `board.js`, other files are just for testing.
+
 Usage notes:
 
 * Get a board with `new_board_from_fen()`
