@@ -1011,11 +1011,11 @@ function valid_coord(s) {
 		return false;
 	}
 	let a = s.charCodeAt(0);
-	if (a < 97 || a > 104) {
+	if (a < 97 || a > 104) {						// a-h
 		return false;
 	}
 	let b = s.charCodeAt(1);
-	if (b < 49 || b > 56) {
+	if (b < 49 || b > 56) {							// 1-8
 		return false;
 	}
 	return true;
