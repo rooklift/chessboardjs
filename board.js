@@ -201,10 +201,6 @@ const board_prototype = {
 
 	attacked: function(defender_colour, arg1, arg2) {
 
-		if (defender_colour !== "w" && defender_colour !== "b") {
-			throw new Error("attacked(): bad call");
-		}
-
 		let index = index_from_args(arg1, arg2);
 		let initial_mail = mailbox64[index];
 
@@ -257,7 +253,7 @@ const board_prototype = {
 					} else if (dist === 1) {
 						if (sq_piece === "k") {
 							return true;
-						} else if (sq_piece === "p" && (attack === -9 || attack === -11)) {		// i.e. we're looking NE or NW along the line
+						} else if (sq_piece === "p" && attack < 0) {		// i.e. it's -9 or -11, we're looking NE or NW along the line
 							return true;
 						}
 					}
@@ -267,7 +263,7 @@ const board_prototype = {
 					} else if (dist === 1) {
 						if (sq_piece === "K") {
 							return true;
-						} else if (sq_piece === "P" && (attack === 9 || attack === 11)) {		// i.e. we're looking SW or SE along the line
+						} else if (sq_piece === "P" && attack > 0) {		// i.e. it's 9 or 11, we're looking SW or SE along the line
 							return true;
 						}
 					}
