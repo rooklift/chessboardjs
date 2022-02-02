@@ -68,7 +68,7 @@ exports.filetest = function() {
 		line = line.trim();
 
 		if (line === "") {
-			break;
+			continue;
 		}
 
 		let parts = line.split(";");
