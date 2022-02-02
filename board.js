@@ -289,7 +289,7 @@ const board_prototype = {
 		return false;
 	},
 
-	fen: function(friendly_flag = false) {
+	fen: function(friendly_flag = false, book_flag = false) {
 
 		let s = "";
 		let blanks = 0;
@@ -315,8 +315,6 @@ const board_prototype = {
 			}
 		}
 
-		// FIXME: possibly implement book mode.
-
 		let ep_string = this.enpassant ? i_to_s(this.enpassant) : "-";
 		let castling_string = this.castling !== "" ? this.castling : "-";
 
@@ -333,7 +331,13 @@ const board_prototype = {
 			castling_string = new_castling_string;
 		}
 
-		return s + ` ${this.active} ${castling_string} ${ep_string} ${this.halfmove} ${this.fullmove}`;
+		// We can also return a string without move numbers, for book purposes.
+
+		if (book_flag) {
+			return s + ` ${this.active} ${castling_string} ${ep_string}`;
+		} else {
+			return s + ` ${this.active} ${castling_string} ${ep_string} ${this.halfmove} ${this.fullmove}`;
+		}
 	},
 
 	compare: function(other) {
