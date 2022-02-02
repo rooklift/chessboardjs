@@ -8,7 +8,7 @@
 * Moves are expected to be in UCI format, e.g. `e2e4` and `e7e8q` etc, *except:*
 * Castling moves are always king-to-rook e.g. `e1h1` (which is Chess960 format)
 * Given a move which might be the wrong format, pass it through `board.c960_castling_converter()` first
-* All legal moves for a board can get got with `board.movegen()`
+* All legal moves for a board can be found with `board.movegen()`
 * Various other useful methods exist, for PGN parsing, end of game detection, etc
 
 ## Example:
