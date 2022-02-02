@@ -774,7 +774,7 @@ const board_prototype = {
 		return this.attacked(this.inactive(), this.inactive_king_index());
 	},
 
-	in_check: function() {
+	king_in_check: function() {
 		return this.attacked(this.active, this.active_king_index());
 	},
 
@@ -847,7 +847,7 @@ const board_prototype = {
 		let check = "";
 		let next_board = this.move(s);
 
-		if (next_board.in_check()) {
+		if (next_board.king_in_check()) {
 			if (next_board.no_moves()) {
 				check = "#";
 			} else {
