@@ -944,6 +944,14 @@ const board_prototype = {
 		return ret;
 	},
 
+	nice_movegen: function() {
+		let ret = [];
+		for (let move of this.movegen()) {
+			ret.push(this.nice_string(move));
+		}
+		return ret;
+	},
+
 	insufficient_material() {
 
 		let minors = 0;
@@ -963,6 +971,10 @@ const board_prototype = {
 		}
 
 		return true;
+	},
+
+	next_number_string: function() {
+		return (this.active === "w") ? `${this.fullmove}.` : `${this.fullmove}...`;
 	},
 
 };
@@ -1296,4 +1308,8 @@ exports.wild = function(ply) {
 		board = board.move(mv);
 	}
 	return board;
+};
+
+exports.startpos = function() {
+	return exports.new_board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 };
