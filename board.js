@@ -109,7 +109,7 @@ const board_prototype = {
 		return new_board(this.state, this.active, this.castling, this.enpassant, this.halfmove, this.fullmove, this.normalchess, this.wk, this.bk);
 	},
 
-	get: function(arg1, arg2) {										// Can call with "h1" or (7, 7) or (63)
+	get: function(arg1, arg2) {										// Can call with ("h1") or (7, 7) or (63)
 		return this.state[index_from_args(arg1, arg2)];
 	},
 
