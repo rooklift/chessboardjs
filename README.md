@@ -1,4 +1,4 @@
-**Chess960** board structure with useful methods. Somewhat derived from [Nibbler](https://github.com/rooklift/nibbler).
+**Chess960** board structure with useful methods. Somewhat derived from [Nibbler](https://github.com/rooklift/nibbler), but also somewhat new and improved.
 
 Everything useful is in `board.js`, other files are just for testing.
 
