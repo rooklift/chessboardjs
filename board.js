@@ -560,12 +560,11 @@ const board_prototype = {
 		// Can assume there really is a pawn of active colour on i.
 
 		let ret = [];
-
 		let piece = this.state[i];
-		let push = (this.active === "w") ? white_p_push : black_p_push;
-		let attack_array = (this.active === "w") ? white_p_caps : black_p_caps;
-
 		let initial_mail = mailbox64[i];
+
+		let push         = (piece === "P") ? white_p_push : black_p_push;
+		let attack_array = (piece === "P") ? white_p_caps : black_p_caps;
 
 		let will_promote    = (piece === "P" && i <= 15) || (piece === "p" && i >= 48);
 		let can_double_push = (piece === "P" && i >= 48) || (piece === "p" && i <= 15);
@@ -629,8 +628,6 @@ const board_prototype = {
 
 		let ret = [];
 
-		let friendlies = (this.active === "w") ? ["K","Q","R","B","N","P"] : ["k","q","r","b","n","p"];
-
 		let piece = this.state[i];
 		let initial_mail = mailbox64[i];
 
@@ -659,7 +656,7 @@ const board_prototype = {
 					if (fast_break) {
 						break;
 					}
-				} else if (friendlies.includes(this.state[sq_index])) {		// Blocked by friendly
+				} else if (this.colour(sq_index) === this.active) {			// Blocked by friendly
 					break;
 				} else {													// Capture
 					ret.push(i_to_s(i) + i_to_s(sq_index));
