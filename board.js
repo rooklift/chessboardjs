@@ -172,21 +172,15 @@ const board_prototype = {
 		// Search range is INCLUSIVE. Result returned as a list of indices.
 		// You can call this function with just a piece to search the whole board.
 
-		if (startx === undefined) startx = 0;
-		if (starty === undefined) starty = 0;
-		if (endx === undefined) endx = 7;
-		if (endy === undefined) endy = 7;
+		if (startx === undefined) startx = 0; if (starty === undefined) starty = 0;
+		if (  endx === undefined)   endx = 7; if (  endy === undefined)   endy = 7;
 
 		// Calling with out of bounds args should also work...
 
-		if (startx < 0) startx = 0;
-		if (startx > 7) startx = 7;
-		if (starty < 0) starty = 0;
-		if (starty > 7) starty = 7;
-		if (endx < 0) endx = 0;
-		if (endx > 7) endx = 7;
-		if (endy < 0) endy = 0;
-		if (endy > 7) endy = 7;
+		if (startx < 0) startx = 0; if (startx > 7) startx = 7;
+		if (starty < 0) starty = 0; if (starty > 7) starty = 7;
+		if (  endx < 0)   endx = 0; if (  endx > 7)   endx = 7;
+		if (  endy < 0)   endy = 0; if (  endy > 7)   endy = 7;
 
 		let ret = [];
 
@@ -628,6 +622,7 @@ const board_prototype = {
 	__pseudolegal_piece_moves: function(i) {
 
 		// Can assume there really is a piece of active colour on i.
+		// This function does not generate castling moves.
 
 		let ret = [];
 
