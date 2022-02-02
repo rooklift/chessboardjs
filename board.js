@@ -650,13 +650,13 @@ const board_prototype = {
 				if (sq_index === -1) {
 					break;
 				}
-				let sq_piece = this.state[sq_index];
-				if (this.state[sq_index] === "") {							// Moving to empty
+				let sq_colour = this.colour(sq_index);
+				if (sq_colour === "") {										// Moving to empty
 					ret.push(i_to_s(i) + i_to_s(sq_index));
 					if (fast_break) {
 						break;
 					}
-				} else if (this.colour(sq_index) === this.active) {			// Blocked by friendly
+				} else if (sq_colour === this.active) {						// Blocked by friendly
 					break;
 				} else {													// Capture
 					ret.push(i_to_s(i) + i_to_s(sq_index));
