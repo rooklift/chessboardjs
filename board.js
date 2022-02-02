@@ -815,6 +815,21 @@ const board_prototype = {
 		return "";
 	},
 
+	sequence_illegal: function(moves) {
+
+		let pos = this;
+
+		for (let s of moves) {
+			let reason = pos.illegal(s);
+			if (reason) {
+				return reason;
+			}
+			pos = pos.move(s);
+		}
+
+		return "";
+	},
+
 	nice_string: function(s) {
 
 		// Given some raw (but valid) UCI move string, return a nice human-readable string
