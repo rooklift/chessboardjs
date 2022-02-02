@@ -133,8 +133,7 @@ const board_prototype = {
 	},
 
 	inactive: function() {
-		if (this.active === "w") return "b";
-		if (this.active === "b") return "w";
+		return this.active === "w" ? "b" : "w";
 	},
 
 	active_king_index() {
