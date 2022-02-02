@@ -10,6 +10,7 @@ Everything useful is in `board.js`, other files are just for testing.
 * Moves are expected to be in UCI format, e.g. `e2e4` and `e7e8q` etc, *except:*
 * Castling moves are always king-to-rook e.g. `e1h1` (which is Chess960 format)
 * Given a move which might be the wrong format, pass it through `board.c960_castling_converter()` first
+* All legal moves for a board can get got with `board.movegen()`
 
 ## Example:
 
