@@ -24,7 +24,7 @@ let foo = new_board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq
 let move = "e2e4";
 move = foo.c960_castling_converter(move);    // Always OK to do this.
 
-if (!foo.illegal(move)) {                    // Note this returns a string (the reason for illegality or "")
+if (!foo.illegal(move)) {                    // Note: returns a string (reason for illegality or "")
     foo = foo.move(move);
 }
 
