@@ -12,9 +12,11 @@ function index_from_args(arg1, arg2) {
 		let b = arg1.charCodeAt(1);
 		return (a - 97) + ((56 - b) * 8);
 	} else if (type1 === "number" && type2 === "number") {
-		return arg1 + (arg2 * 8);
+		return arg1 + arg2 * 8;
 	} else if (type1 === "number" && type2 === "undefined") {
 		return arg1;
+	} else if (type1 === "object") {			// {x, y} objects, not actually used in this file.
+		return arg1.x + arg1.y * 8;
 	} else {
 		throw new Error(`index_from_args(${arg1}, ${arg2}): bad args`);
 	}
