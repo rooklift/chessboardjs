@@ -1017,7 +1017,7 @@ const board_prototype = {
 
 		if (s.toUpperCase() === "O-O") {
 
-			let mv = this.find_castling_move(false);		// FIXME
+			let mv = (this.active === "w") ? "e1h1" : "e8h8";		// FIXME
 
 			if (mv && !this.illegal(mv)) {
 				return [mv, ""];
@@ -1028,7 +1028,7 @@ const board_prototype = {
 
 		if (s.toUpperCase() === "O-O-O") {
 
-			let mv = this.find_castling_move(true);			// FIXME
+			let mv = (this.active === "w") ? "e1a1" : "e8a8";		// FIXME
 
 			if (mv && !this.illegal(mv)) {
 				return [mv, ""];
