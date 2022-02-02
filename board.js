@@ -944,6 +944,27 @@ const board_prototype = {
 		return ret;
 	},
 
+	insufficient_material() {
+
+		let minors = 0;
+
+		for (let i = 0; i < 64; i++) {
+
+			switch (this.state[i]) {
+
+			case "Q": case "q": case "R": case "r": case "P": case "p":
+				return false;
+			case "B": case "b": case "N": case "n":
+				minors++;
+				if (minors >= 2) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+	},
+
 };
 
 // ------------------------------------------------------------------------------------------------
