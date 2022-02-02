@@ -46,9 +46,9 @@ const mailbox64 = [
 	91, 92, 93, 94, 95, 96, 97, 98,
 ];
 
-const knight_attacks = [-21, -19, -8, 12, 21, 19, 8, -12];
-const rook_attacks = [-10, 1, 10, -1];
-const bishop_attacks = [-11, -9, 11, 9];
+const knight_attacks = [-21, -19, -12, -8, 8, 12, 19, 21];
+const rook_attacks = [-10, -1, 1, 10];
+const bishop_attacks = [-11, -9, 9, 11];
 const queen_attacks = rook_attacks.concat(bishop_attacks);
 const king_attacks = rook_attacks.concat(bishop_attacks);
 
@@ -56,7 +56,7 @@ const white_p_push = -10;
 const black_p_push = 10;
 
 const white_p_caps = [-11, -9];
-const black_p_caps = [11, 9];
+const black_p_caps = [9, 11];
 
 // ------------------------------------------------------------------------------------------------
 
