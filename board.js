@@ -672,31 +672,8 @@ const board_prototype = {
 
 		let piece = this.state[i];
 
-		if (piece === "K") {
-			if (i < 56) return [];
-		} else {
-			if (i > 7) return [];
-		}
-
-		// So it's on the back rank...
-
-		let possible_rook_x = [];
-
-		if (this.active === "w") {
-			for (let ch of this.castling) {
-				if ("A" <= ch && ch <= "H") {
-					possible_rook_x.push(ch.charCodeAt(0) - 65);
-				}
-			}
-		} else {
-			for (let ch of this.castling) {
-				if ("a" <= ch && ch <= "h") {
-					possible_rook_x.push(ch.charCodeAt(0) - 97);
-				}
-			}
-		}
-
-		if (possible_rook_x.length === 0) {
+		let target_columns = this.__castling_target_columns();
+		if (target_columns.length === 0) {
 			return [];
 		}
 
@@ -711,7 +688,7 @@ const board_prototype = {
 
 		let ret = [];
 
-		for (let x2 of possible_rook_x) {		// rook start x
+		for (let x2 of target_columns) {		// rook start x
 
 			let king_target_x;
 			let rook_target_x;
@@ -759,6 +736,33 @@ const board_prototype = {
 
 			if (ok) {
 				ret.push(xy_to_s(x1, y1) + xy_to_s(x2, y1));
+			}
+		}
+
+		return ret;
+	},
+
+	__castling_target_columns: function() {		// Returns a list as integers 0-7
+
+		if (this.active === "w") {
+			if (this.wk < 56) return [];		// These checks are rather redundant
+		} else {								// unless this.castling is corrupt...
+			if (this.bk > 7) return [];
+		}
+
+		let ret = [];
+
+		if (this.active === "w") {
+			for (let ch of this.castling) {
+				if ("A" <= ch && ch <= "H") {
+					ret.push(ch.charCodeAt(0) - 65);
+				}
+			}
+		} else {
+			for (let ch of this.castling) {
+				if ("a" <= ch && ch <= "h") {
+					ret.push(ch.charCodeAt(0) - 97);
+				}
 			}
 		}
 
@@ -1017,7 +1021,7 @@ const board_prototype = {
 
 		if (s.toUpperCase() === "O-O") {
 
-			let mv = (this.active === "w") ? "e1h1" : "e8h8";		// FIXME
+			let mv = this.__propose_castling_move();
 
 			if (mv && !this.illegal(mv)) {
 				return [mv, ""];
@@ -1028,7 +1032,7 @@ const board_prototype = {
 
 		if (s.toUpperCase() === "O-O-O") {
 
-			let mv = (this.active === "w") ? "e1a1" : "e8a8";		// FIXME
+			let mv = this.__propose_castling_move(true);
 
 			if (mv && !this.illegal(mv)) {
 				return [mv, ""];
@@ -1145,6 +1149,25 @@ const board_prototype = {
 		if (valid_moves.length > 1) {
 			return ["", `ambiguous moves: [${valid_moves}]`];
 		}
+	},
+
+	__propose_castling_move: function(queenside) {
+
+		let target_columns = this.__castling_target_columns();
+
+		if (target_columns.length === 0) {
+			return "";
+		}
+
+		let [x1, y1] = (this.active === "w") ? i_to_xy(this.wk) : i_to_xy(this.bk);
+
+		for (let tar_col of target_columns) {
+			if ((queenside && tar_col < x1) || (!queenside && tar_col > x1)) {
+				return xy_to_s(x1, y1) + xy_to_s(tar_col, y1);
+			}
+		}
+
+		return "";
 	},
 
 };
