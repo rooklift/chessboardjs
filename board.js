@@ -521,7 +521,7 @@ const board_prototype = {
 	pseudolegals: function(i) {
 
 		let piece = this.state[i];
-		if (piece === "") {
+		if (piece === "") {					// Don't remove this test. Potentially relied upon by more than just movegen().
 			return [];
 		}
 
@@ -780,12 +780,32 @@ const board_prototype = {
 		return this.movegen().length === 0;			// FIXME: ideally short-circuit the movegen asap
 	},
 
-	illegal: function(s) {							// FIXME: todo properly
-		if (this.movegen().includes(s)) {
-			return "";
-		} else {
-			return "Illegal <reason>";
+	illegal: function(s) {
+
+		if (typeof s !== "string") {
+			return "Not a string";
 		}
+
+		if (s.length < 4 || s.length > 5) {
+			return `${s} had wrong string length`;
+		}
+
+		if (!valid_coord(s.slice(0, 2))) {
+			return `${s} had invalid starting coordinate`;
+		}
+
+		let i = s_to_i(s.slice(0, 2));
+		let pseudolegals = this.pseudolegals(i);
+		if (!pseudolegals.includes(s)) {
+			return `${s} not even pseudolegal`;
+		}
+
+		let test = this.move(s);
+		if (test.__can_capture_king()) {
+			return `${s} leaves king in check`;
+		}
+
+		return "";
 	},
 
 	nice_string: function(s) {
