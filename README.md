@@ -11,3 +11,22 @@ Usage notes:
 * Castling moves are always king-to-rook e.g. `e1h1` (which is Chess960 format)
 * Given a move which might be the wrong format, pass it through `board.c960_castling_converter()` first
 
+Example:
+
+```javascript
+
+const {new_board_from_fen} = require("./board");
+
+let foo = new_board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+// Obtain a move from some source, e.g. engine / user input.
+
+let move = "e2e4";
+move = foo.c960_castling_converter(move);    // Always OK to do this.
+
+if (!foo.illegal(move)) {                    // Note this returns a string (the reason for illegality or "")
+    foo = foo.move(move);
+}
+
+console.log(foo.graphic());
+```
