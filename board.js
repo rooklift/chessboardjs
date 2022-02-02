@@ -110,8 +110,11 @@ const board_prototype = {
 	},
 
 	get: function(arg1, arg2) {										// Can call with "h1" or (7, 7) or (63)
-		let index = index_from_args(arg1, arg2);
-		return this.state[index];
+		return this.state[index_from_args(arg1, arg2)];
+	},
+
+	xy_get: function(x, y) {										// For optimisation (does increase perft by a few %)
+		return this.state[xy_to_i(x, y)];
 	},
 
 	set: function(c, arg1, arg2) {
@@ -360,8 +363,8 @@ const board_prototype = {
 		let target = s.slice(2, 4);
 		let [x1, y1] = s_to_xy(source);										// e.g. [4, 7]
 		let [x2, y2] = s_to_xy(target);
-		let source_piece = this.get(x1, y1);
-		let target_piece = this.get(x2, y2);
+		let source_piece = this.xy_get(x1, y1);
+		let target_piece = this.xy_get(x2, y2);
 
 		let ret = this.copy();
 
@@ -436,13 +439,13 @@ const board_prototype = {
 		ret.enpassant = null;
 
 		if (pawn_flag && y1 === 6 && y2 === 4) {		// White pawn advanced 2
-			if ((x1 > 0 && ret.get(x1 - 1, 4) === "p") || (x1 < 7 && ret.get(x1 + 1, 4) === "p")) {
+			if ((x1 > 0 && ret.xy_get(x1 - 1, 4) === "p") || (x1 < 7 && ret.xy_get(x1 + 1, 4) === "p")) {
 				ret.enpassant = xy_to_i(x1, 5);
 			}
 		}
 
 		if (pawn_flag && y1 === 1 && y2 === 3) {		// Black pawn advanced 2
-			if ((x1 > 0 && ret.get(x1 - 1, 3) === "P") || (x1 < 7 && ret.get(x1 + 1, 3) === "P")) {
+			if ((x1 > 0 && ret.xy_get(x1 - 1, 3) === "P") || (x1 < 7 && ret.xy_get(x1 + 1, 3) === "P")) {
 				ret.enpassant = xy_to_i(x1, 2);
 			}
 		}
@@ -450,7 +453,7 @@ const board_prototype = {
 		// Actually make the move (except we already did castling)...
 
 		if (!castle_flag) {
-			ret.set(ret.get(x1, y1), x2, y2);
+			ret.set(ret.xy_get(x1, y1), x2, y2);
 			ret.set("", x1, y1);
 		}
 
@@ -542,7 +545,7 @@ const board_prototype = {
 			return [];
 		}
 
-		let piece = this.get(i);
+		let piece = this.state[i];
 
 		if (piece === "P" || piece === "p") {
 			return this.__pseudolegal_pawn_moves(i);
@@ -739,7 +742,7 @@ const board_prototype = {
 				if (x === x1 || x === x2) {		// Ignore "blockers" that are the king or rook themselves
 					continue;					// (after checking for checks)
 				}
-				if (this.get(x, y1)) {
+				if (this.xy_get(x, y1)) {
 					ok = false;
 					break;
 				}
@@ -753,7 +756,7 @@ const board_prototype = {
 				if (x === x1 || x === x2) {		// Ignore "blockers" that are the king or rook themselves
 					continue;
 				}
-				if (this.get(x, y1)) {
+				if (this.xy_get(x, y1)) {
 					ok = false;
 					break;
 				}
@@ -777,10 +780,10 @@ const board_prototype = {
 
 	c960_castling_converter: function(s) {
 		// Given some move s, convert it to the new Chess 960 castling format if needed.
-		if (s === "e1g1" && this.get(4, 7) === "K" && this.castling.includes("G") === false) return "e1h1";
-		if (s === "e1c1" && this.get(4, 7) === "K" && this.castling.includes("C") === false) return "e1a1";
-		if (s === "e8g8" && this.get(4, 0) === "k" && this.castling.includes("g") === false) return "e8h8";
-		if (s === "e8c8" && this.get(4, 0) === "k" && this.castling.includes("c") === false) return "e8a8";
+		if (s === "e1g1" && this.xy_get(4, 7) === "K" && this.castling.includes("G") === false) return "e1h1";
+		if (s === "e1c1" && this.xy_get(4, 7) === "K" && this.castling.includes("C") === false) return "e1a1";
+		if (s === "e8g8" && this.xy_get(4, 0) === "k" && this.castling.includes("g") === false) return "e8h8";
+		if (s === "e8c8" && this.xy_get(4, 0) === "k" && this.castling.includes("c") === false) return "e8a8";
 		return s;
 	},
 
