@@ -387,7 +387,7 @@ const board_prototype = {
 		}
 
 		if (source_piece === "R" && y1 === 7) {
-			ret.__delete_castling_char(source[0].toUpperCase())
+			ret.__delete_castling_char(source[0].toUpperCase());
 		}
 
 		if (source_piece === "r" && y1 === 0) {
@@ -395,11 +395,11 @@ const board_prototype = {
 		}
 
 		if (target_piece === "R" && y2 === 7) {
-			ret.__delete_castling_char(target[0].toUpperCase())
+			ret.__delete_castling_char(target[0].toUpperCase());
 		}
 
 		if (target_piece === "r" && y2 === 0) {
-			ret.__delete_castling_char(target[0])
+			ret.__delete_castling_char(target[0]);
 		}
 
 		// Update move counters...
@@ -1346,7 +1346,7 @@ exports.new_board_from_fen = function(fen) {
 	ret.normalchess = is_normal_chess(ret);					// Requires ret.castling to be correct.
 
 	return ret;
-}
+};
 
 function castling_rights(board, s) {						// s is the castling string from a FEN
 
