@@ -321,7 +321,7 @@ const board_prototype = {
 		let ep_string = this.enpassant ? i_to_s(this.enpassant) : "-";
 		let castling_string = this.castling !== "" ? this.castling : "-";
 
-		// While interally we always use Chess960 format, we can return a more friendly
+		// While internally we always use Chess960 format, we can return a more friendly
 		// FEN if asked (and if the position is normal Chess). Relies on our normalchess
 		// flag being accurate... (potential for bugs there).
 
