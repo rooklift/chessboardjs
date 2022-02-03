@@ -200,6 +200,9 @@ const board_prototype = {
 
 	attacked: function(defender_colour, arg1, arg2) {
 
+		// Requires a defender_colour arg because this is sometimes used to check the path
+		// of a king while castling (i.e. via squares which don't have a colour as such).
+
 		let index = index_from_args(arg1, arg2);
 		let initial_mail = mailbox64[index];
 
