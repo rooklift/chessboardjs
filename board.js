@@ -885,16 +885,16 @@ const board_prototype = {
 			// Would the move be ambiguous?
 			// IMPORTANT: note that the actual move will not necessarily be valid_moves[0].
 
-			let possible_sources = this.find(piece);
+			let possible_source_indices = this.find(piece);
 			let possible_moves = [];
 			let valid_moves = [];
 
-			for (let foo of possible_sources) {
+			for (let foo of possible_source_indices) {
 				possible_moves.push(i_to_s(foo) + target);		// e.g. "g1f3"
 			}
 
 			for (let move of possible_moves) {
-				if (this.illegal(move) === "") {
+				if (!this.illegal(move)) {
 					valid_moves.push(move);
 				}
 			}
@@ -1136,7 +1136,7 @@ const board_prototype = {
 		let valid_moves = [];
 
 		for (let move of possible_moves) {
-			if (this.illegal(move) === "") {
+			if (!this.illegal(move)) {
 				valid_moves.push(move);
 			}
 		}
