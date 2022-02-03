@@ -55,11 +55,11 @@ function perft_print_move(pos, mv, val) {
 
 // ------------------------------------------------------------------------------------------------
 
-exports.filetest = function() {
+exports.filetest = function(filename = "perft-marcel.epd") {
 
 	let fs = require("fs");
 
-	let infile = fs.readFileSync("perft-marcel.epd", "utf8");
+	let infile = fs.readFileSync(filename, "utf8");
 
 	let bad_results = [];
 
