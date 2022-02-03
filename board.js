@@ -901,7 +901,7 @@ const board_prototype = {
 
 			if (valid_moves.length > 2) {
 
-				// Full disambiguation.
+				// Full disambiguation. This isn't always needed but meh.
 
 				if (tar_piece === "") {
 					return piece.toUpperCase() + source + target + check;
