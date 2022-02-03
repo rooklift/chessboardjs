@@ -1342,15 +1342,15 @@ exports.new_board_from_fen = function(fen) {
 	// Some hard things. Do these in the right order!
 
 	ret.castling = castling_rights(ret, tokens[2]);
-	ret.enpassant = fen_passant_square(ret, tokens[3]);				// Requires ret.active to be correct.
-	ret.normalchess = is_normal_chess(ret);							// Requires ret.castling to be correct.
+	ret.enpassant = fen_passant_square(ret, tokens[3]);		// Requires ret.active to be correct.
+	ret.normalchess = is_normal_chess(ret);					// Requires ret.castling to be correct.
 
 	return ret;
 }
 
-function castling_rights(board, s) {					// s is the castling string from a FEN
+function castling_rights(board, s) {						// s is the castling string from a FEN
 
-	let dict = Object.create(null);						// Will contain keys like "A" to "H" and "a" to "h"
+	let dict = Object.create(null);							// Will contain keys like "A" to "H" and "a" to "h"
 
 	// WHITE
 
@@ -1365,12 +1365,12 @@ function castling_rights(board, s) {					// s is the castling string from a FEN
 				}
 			}
 			if (ch === "Q") {
-				if (board.get("a1") === "R") {			// Compatibility with regular Chess FEN.
+				if (board.get("a1") === "R") {				// Compatibility with regular Chess FEN.
 					dict.A = true;
 				} else {
 					for (let col of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
 						let piece = board.get(col + "1");
-						if (piece === "K") {
+						if (piece === "K") {				// Found the king before a rook, so there won't be queenside castling.
 							break;
 						}
 						if (piece === "R") {
@@ -1380,12 +1380,12 @@ function castling_rights(board, s) {					// s is the castling string from a FEN
 				}
 			}
 			if (ch === "K") {
-				if (board.get("h1") === "R") {			// Compatibility with regular Chess FEN.
+				if (board.get("h1") === "R") {				// Compatibility with regular Chess FEN.
 					dict.H = true;
 				} else {
-					for (let col of ["h", "g", "f", "e", "d", "c", "b", "a"]) {
+					for (let col of ["h", "g", "f", "e", "d", "c", "b", "a"]) {		// Note reverse order...
 						let piece = board.get(col + "1");
-						if (piece === "K") {
+						if (piece === "K") {				// Found the king before a rook, so there won't be kingside castling.
 							break;
 						}
 						if (piece === "R") {
@@ -1410,7 +1410,7 @@ function castling_rights(board, s) {					// s is the castling string from a FEN
 				}
 			}
 			if (ch === "q") {
-				if (board.get("a8") === "r") {			// Compatibility with regular Chess FEN.
+				if (board.get("a8") === "r") {
 					dict.a = true;
 				} else {
 					for (let col of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
@@ -1425,7 +1425,7 @@ function castling_rights(board, s) {					// s is the castling string from a FEN
 				}
 			}
 			if (ch === "k") {
-				if (board.get("h8") === "r") {			// Compatibility with regular Chess FEN.
+				if (board.get("h8") === "r") {
 					dict.h = true;
 				} else {
 					for (let col of ["h", "g", "f", "e", "d", "c", "b", "a"]) {
