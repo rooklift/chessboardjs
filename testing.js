@@ -24,7 +24,7 @@ exports.perft = function(fen, depth) {
 		}
 	}
 	return val;
-}
+};
 
 function perft_recurse(pos, depth, print_moves) {
 	let moves = pos.movegen();
@@ -95,24 +95,49 @@ exports.filetest = function() {
 	} else {
 		console.log("\nALL OK");
 	}
-}
+};
 
 exports.startpos = function() {
 	return boardjs.new_board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-}
+};
 
-exports.wild = function(ply) {
+exports.random = function(ply = 100) {
 	let board = boardjs.new_board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+	let history = [];
 	for (let i = 0; i < ply; i++) {
 		let moves = board.movegen();
 		if (moves.length === 0) {
 			break;
 		}
 		let mv = moves[Math.floor(moves.length * Math.random())];
+		if (board.active === "w") {
+			history.push(board.next_number_string() + " " + board.nice_string(mv));
+		} else {
+			history.push(board.nice_string(mv));
+		}
 		board = board.move(mv);
 	}
-	return board;
+	log_history(history);
+	console.log(board.graphic());
 };
+
+function log_history(history) {
+	let len = 0;
+	let acc = "";
+	for (let item of history) {
+		if (acc) {
+			acc += " ";
+		}
+		acc += item;
+		if (acc.length > 72) {
+			console.log(acc);
+			acc = "";
+		}
+	}
+	if (acc) {
+		console.log(acc);
+	}
+}
 
 exports.s20 = function() {		// So called because this takes about 20 secs on my machine.
 	exports.perft("r3k2r/1P1pp1P1/8/2P2P2/2p2p2/8/1p1PP1p1/R3K2R w KQkq - 0 1", 5);
