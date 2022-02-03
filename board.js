@@ -750,6 +750,9 @@ const board_prototype = {
 
 	__castling_target_columns: function() {		// Returns a list as integers 0-7
 
+		// Assuming this.castling isn't corrupt, getting a non-zero-length
+		// result from this proves the king is on the back rank.
+
 		let ret = [];
 
 		if (this.active === "w") {
