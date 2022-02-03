@@ -1250,7 +1250,7 @@ function valid_coord(s) {
 exports.new_board_from_fen = function(fen) {
 
 	if (fen.length > 200) {
-		throw new Error("Invalid FEN - size");
+		throw new Error(`Invalid FEN - length was ${fen.length}`);
 	}
 
 	let ret = new_board();
@@ -1268,7 +1268,7 @@ exports.new_board_from_fen = function(fen) {
 	if (tokens.length === 5) tokens.push("1");
 
 	if (tokens.length !== 6) {
-		throw new Error("Invalid FEN - token count");
+		throw new Error(`Invalid FEN - token count was ${tokens.length}`);
 	}
 
 	if (tokens[0].endsWith("/")) {									// Some FEN writer does this
@@ -1278,7 +1278,7 @@ exports.new_board_from_fen = function(fen) {
 	let rows = tokens[0].split("/");
 
 	if (rows.length > 8) {
-		throw new Error("Invalid FEN - board row count");
+		throw new Error(`Invalid FEN - too many rows (${rows.length})`);
 	}
 
 	let white_kings = 0;
@@ -1291,7 +1291,7 @@ exports.new_board_from_fen = function(fen) {
 		for (let c of rows[y]) {
 
 			if (x > 7) {
-				throw new Error("Invalid FEN - row length");
+				throw new Error(`Invalid FEN - too many columns`);
 			}
 
 			if (["1", "2", "3", "4", "5", "6", "7", "8"].includes(c)) {
@@ -1300,7 +1300,7 @@ exports.new_board_from_fen = function(fen) {
 			}
 
 			if ((c === "P" || c === "p") && (y === 0 || y === 7)) {
-				throw new Error("Invalid FEN - pawn position");
+				throw new Error(`Invalid FEN - pawn on back rank`);
 			}
 
 			if (["K", "k", "Q", "q", "R", "r", "B", "b", "N", "n", "P", "p"].includes(c)) {
@@ -1311,32 +1311,31 @@ exports.new_board_from_fen = function(fen) {
 				continue;
 			}
 
-			throw new Error("Invalid FEN - unknown piece");
+			throw new Error(`Invalid FEN - unknown piece ${c}`);
 		}
 	}
 
-	tokens[1] = tokens[1].toLowerCase();
-	if (tokens[1] !== "w" && tokens[1] !== "b") {
-		throw new Error("Invalid FEN - active player");
+	ret.active = tokens[1].toLowerCase();
+	if (ret.active !== "w" && ret.active !== "b") {
+		throw new Error(`Invalid FEN - active player was ${tokens[1]}`);
 	}
-	ret.active = tokens[1];
-
+	
 	ret.halfmove = parseInt(tokens[4], 10);
 	if (Number.isNaN(ret.halfmove)) {
-		throw new Error("Invalid FEN - halfmoves");
+		throw new Error(`Invalid FEN - halfmoves was ${tokens[4]}`);
 	}
 
 	ret.fullmove = parseInt(tokens[5], 10);
 	if (Number.isNaN(ret.fullmove)) {
-		throw new Error("Invalid FEN - fullmoves");
+		throw new Error(`Invalid FEN - fullmoves was ${tokens[5]}`);
 	}
 
 	if (white_kings !== 1 || black_kings !== 1) {
-		throw "Invalid FEN - number of kings";
+		throw new Error(`Invalid FEN - number of kings`);
 	}
 
 	if (ret.attacked(ret.inactive(), ret.inactive_king_index())) {
-		throw new Error("Invalid FEN - non-mover's king in check");
+		throw new Error(`Invalid FEN - non-mover's king in check`);
 	}
 
 	// Some hard things. Do these in the right order!
