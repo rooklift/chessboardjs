@@ -659,6 +659,8 @@ const board_prototype = {
 					ret.push(i_to_s(i) + i_to_s(sq_index));
 					if (fast_break) {
 						break;
+					} else {
+						continue;
 					}
 				} else if (sq_colour === this.active) {						// Blocked by friendly
 					break;
