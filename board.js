@@ -876,9 +876,9 @@ const board_prototype = {
 
 			if ((piece === "K" && tar_piece === "R") || (piece === "k" && tar_piece === "r")) {
 				if (x1 < x2) {
-					return `O-O${check}`;
+					return "O-O" + check;
 				} else {
-					return `O-O-O${check}`;
+					return "O-O-O" + check;
 				}
 			}
 
@@ -956,9 +956,7 @@ const board_prototype = {
 			ret += s[4].toUpperCase();
 		}
 
-		ret += check;
-
-		return ret;
+		return ret + check;
 	},
 
 	nice_movegen: function() {
