@@ -1159,6 +1159,10 @@ const board_prototype = {
 
 	__propose_castling_move: function(queenside) {
 
+		// Tries to return a single castling move, based solely on
+		// king position and this.castling. Kingside by default.
+		// Result is potentially completely illegal.
+
 		let target_columns = this.__castling_target_columns();
 
 		if (target_columns.length === 0) {
