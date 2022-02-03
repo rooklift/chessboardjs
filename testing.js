@@ -113,3 +113,7 @@ exports.wild = function(ply) {
 	}
 	return board;
 };
+
+exports.s20 = function() {		// So called because this takes about 20 secs on my machine.
+	exports.perft("r3k2r/1P1pp1P1/8/2P2P2/2p2p2/8/1p1PP1p1/R3K2R w KQkq - 0 1", 5);
+};
