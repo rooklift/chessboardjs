@@ -613,7 +613,6 @@ const board_prototype = {
 			if (sq_index === this.enpassant) {							// This is a valid e.p. capture.
 				ret.push(i_to_s(i) + i_to_s(sq_index));
 			} else if (this.colour(sq_index) === this.inactive()) {		// Can't just test !== this.active, because the colour can be ""
-				sq_piece = this.state[sq_index];
 				if (will_promote) {
 					ret.push(i_to_s(i) + i_to_s(sq_index) + "q");
 					ret.push(i_to_s(i) + i_to_s(sq_index) + "r");
