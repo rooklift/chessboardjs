@@ -126,6 +126,17 @@ const board_prototype = {
 		if (c === "k") this.bk = index;
 	},
 
+	colour: function(arg1, arg2) {
+		let piece = this.get(arg1, arg2);
+		if (piece === "") {
+			return "";
+		} else if (piece === "K" || piece === "Q" || piece === "R" || piece === "B" || piece === "N" || piece === "P") {
+			return "w";
+		} else {
+			return "b";
+		}
+	},
+
 	inactive: function() {
 		return this.active === "w" ? "b" : "w";
 	},
@@ -533,11 +544,11 @@ const board_prototype = {
 
 		// Don't assume anything about what's on i.
 
-		let piece = this.state[i];
-
-		if (colour_of_piece(piece) !== this.active) {
+		if (this.colour(i) !== this.active) {
 			return [];
 		}
+
+		let piece = this.state[i];
 
 		if (piece === "P" || piece === "p") {
 			return this.__pseudolegal_pawn_moves(i);
@@ -599,12 +610,10 @@ const board_prototype = {
 				continue;
 			}
 
-			if (sq_index === this.enpassant) {					// This is a valid e.p. capture.
+			if (sq_index === this.enpassant) {							// This is a valid e.p. capture.
 				ret.push(i_to_s(i) + i_to_s(sq_index));
-				continue;
-			}
-
-			if (colour_of_piece(this.state[sq_index]) === this.inactive()) {	// Don't test !== this.active, as it can also be ""
+			} else if (this.colour(sq_index) === this.inactive()) {		// Can't just test !== this.active, because the colour can be ""
+				sq_piece = this.state[sq_index];
 				if (will_promote) {
 					ret.push(i_to_s(i) + i_to_s(sq_index) + "q");
 					ret.push(i_to_s(i) + i_to_s(sq_index) + "r");
@@ -648,7 +657,7 @@ const board_prototype = {
 				if (sq_index === -1) {
 					break;
 				}
-				let sq_colour = colour_of_piece(this.state[sq_index]);
+				let sq_colour = this.colour(sq_index);
 				if (sq_colour === "") {										// Moving to empty
 					ret.push(i_to_s(i) + i_to_s(sq_index));
 					if (fast_break) {
@@ -1241,16 +1250,6 @@ function valid_coord(s) {
 		return false;
 	}
 	return true;
-}
-
-function colour_of_piece(piece) {
-	if (piece === "") {
-		return "";
-	} else if (piece === "K" || piece === "Q" || piece === "R" || piece === "B" || piece === "N" || piece === "P") {
-		return "w";
-	} else {
-		return "b";
-	}
 }
 
 // ------------------------------------------------------------------------------------------------
