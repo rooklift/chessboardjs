@@ -795,6 +795,9 @@ const board_prototype = {
 
 	illegal: function(s) {
 
+		// Note that if s is known to be pseudolegal, calling this is suboptimal, and it would be
+		// better just to call move() and __can_capture_king()
+
 		if (typeof(s) !== "string") {
 			return "Not a string";
 		}
