@@ -806,12 +806,13 @@ const board_prototype = {
 			return `${s} had wrong string length`;
 		}
 
-		if (!valid_coord(s.slice(0, 2))) {
+		let source = s.slice(0, 2);
+
+		if (!valid_coord(source)) {
 			return `${s} had invalid starting coordinate`;
 		}
 
-		let i = s_to_i(s.slice(0, 2));
-		let pseudolegals = this.pseudolegals(i);
+		let pseudolegals = this.pseudolegals(s_to_i(source));
 		if (!pseudolegals.includes(s)) {
 			return `${s} not even pseudolegal`;
 		}
