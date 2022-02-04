@@ -795,7 +795,7 @@ const board_prototype = {
 
 	illegal: function(s) {
 
-		if (typeof s !== "string") {
+		if (typeof(s) !== "string") {
 			return "Not a string";
 		}
 
