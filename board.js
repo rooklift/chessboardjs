@@ -60,9 +60,28 @@ const black_p_push = 10;
 const white_p_caps = [-11, -9];
 const black_p_caps = [9, 11];
 
+const K =  1
+const Q =  2
+const R =  3
+const B =  4
+const N =  5
+const P =  6
+const k = -1
+const q = -2
+const r = -3
+const b = -4
+const n = -5
+const p = -6
+
+const lookups = {K, Q, R, B, N, P, k, q, r, b, n, p};
+
+const WHITE =  1
+const EMPTY =  0
+const BLACK = -1
+
 // ------------------------------------------------------------------------------------------------
 
-function new_board(state = null, active = "w", castling = "", enpassant = null, halfmove = 0, fullmove = 1, normalchess = false, wk = null, bk = null) {
+function new_board(state = null, active = WHITE, castling = "", enpassant = null, halfmove = 0, fullmove = 1, normalchess = false, wk = null, bk = null) {
 
 	// Dangers:
 	//
@@ -78,14 +97,14 @@ function new_board(state = null, active = "w", castling = "", enpassant = null, 
 		ret.state = Array.from(state);
 	} else {
 		ret.state = [
-			"", "", "", "", "", "", "", "",
-			"", "", "", "", "", "", "", "",
-			"", "", "", "", "", "", "", "",
-			"", "", "", "", "", "", "", "",
-			"", "", "", "", "", "", "", "",
-			"", "", "", "", "", "", "", "",
-			"", "", "", "", "", "", "", "",
-			"", "", "", "", "", "", "", "",
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
 		];
 	}
 
@@ -122,31 +141,31 @@ const board_prototype = {
 	set: function(c, arg1, arg2) {
 		let index = index_from_args(arg1, arg2);
 		this.state[index] = c;
-		if (c === "K") this.wk = index;
-		if (c === "k") this.bk = index;
+		if (c === K) this.wk = index;
+		if (c === k) this.bk = index;
 	},
 
 	colour: function(arg1, arg2) {
 		let piece = this.get(arg1, arg2);
-		if (piece === "") {
-			return "";
-		} else if (piece === "K" || piece === "Q" || piece === "R" || piece === "B" || piece === "N" || piece === "P") {
-			return "w";
+		if (piece === 0) {
+			return EMPTY;
+		} else if (piece > 0) {
+			return WHITE;
 		} else {
-			return "b";
+			return BLACK;
 		}
 	},
 
 	inactive: function() {
-		return this.active === "w" ? "b" : "w";
+		return this.active * -1;
 	},
 
 	active_king_index() {
-		return this.active === "w" ? this.wk : this.bk;
+		return this.active === WHITE ? this.wk : this.bk;
 	},
 
 	inactive_king_index() {
-		return this.active === "w" ? this.bk : this.wk;
+		return this.active === WHITE ? this.bk : this.wk;
 	},
 
 	graphic: function() {
@@ -217,16 +236,16 @@ const board_prototype = {
 					break;
 				}
 				let sq_piece = this.state[sq_index];
-				if (sq_piece === "") {
+				if (sq_piece === 0) {
 					continue;
 				}
 				// At this point we've hit a piece so we're either returning true or breaking this attack loop.
-				if (defender_colour === "w") {
-					if (sq_piece === "q" || sq_piece === "r" || (sq_piece === "k" && dist === 1)) {
+				if (defender_colour === WHITE) {
+					if (sq_piece === q || sq_piece === r || (sq_piece === k && dist === 1)) {
 						return true;
 					}
 				} else {
-					if (sq_piece === "Q" || sq_piece === "R" || (sq_piece === "K" && dist === 1)) {
+					if (sq_piece === Q || sq_piece === R || (sq_piece === K && dist === 1)) {
 						return true;
 					}
 				}
@@ -245,27 +264,27 @@ const board_prototype = {
 					break;
 				}
 				let sq_piece = this.state[sq_index];
-				if (sq_piece === "") {
+				if (sq_piece === 0) {
 					continue;
 				}
 				// At this point we've hit a piece so we're either returning true or breaking this attack loop.
-				if (defender_colour === "w") {
-					if (sq_piece === "q" || sq_piece === "b") {
+				if (defender_colour === WHITE) {
+					if (sq_piece === q || sq_piece === b) {
 						return true;
 					} else if (dist === 1) {
-						if (sq_piece === "k") {
+						if (sq_piece === k) {
 							return true;
-						} else if (sq_piece === "p" && attack < 0) {		// i.e. it's -9 or -11, we're looking NE or NW along the line
+						} else if (sq_piece === p && attack < 0) {		// i.e. it's -9 or -11, we're looking NE or NW along the line
 							return true;
 						}
 					}
 				} else {
-					if (sq_piece === "Q" || sq_piece === "B") {
+					if (sq_piece === Q || sq_piece === B) {
 						return true;
 					} else if (dist === 1) {
-						if (sq_piece === "K") {
+						if (sq_piece === K) {
 							return true;
-						} else if (sq_piece === "P" && attack > 0) {		// i.e. it's 9 or 11, we're looking SW or SE along the line
+						} else if (sq_piece === P && attack > 0) {		// i.e. it's 9 or 11, we're looking SW or SE along the line
 							return true;
 						}
 					}
@@ -281,10 +300,10 @@ const board_prototype = {
 				continue;
 			}
 			let sq_piece = this.state[sq_index];
-			if (sq_piece === "n" && defender_colour === "w") {
+			if (sq_piece === n && defender_colour === WHITE) {
 				return true;
 			}
-			if (sq_piece === "N" && defender_colour === "b") {
+			if (sq_piece === N && defender_colour === BLACK) {
 				return true;
 			}
 		}
@@ -298,7 +317,7 @@ const board_prototype = {
 		let blanks = 0;
 
 		for (let i = 0; i < 64; i++) {
-			if (this.state[i] === "") {
+			if (this.state[i] === 0) {
 				blanks++;
 			} else {
 				if (blanks > 0) {
@@ -371,9 +390,9 @@ const board_prototype = {
 
 		let ret = this.copy();
 
-		let pawn_flag = source_piece === "P" || source_piece === "p";
-		let castle_flag = (source_piece === "K" && target_piece === "R") || (source_piece === "k" && target_piece === "r");
-		let capture_flag = !castle_flag && target_piece !== "";
+		let pawn_flag = source_piece === P || source_piece === p;
+		let castle_flag = (source_piece === K && target_piece === R) || (source_piece === k && target_piece === r);
+		let capture_flag = !castle_flag && target_piece;
 
 		if (pawn_flag && x1 !== x2) {										// The above test for captures doesn't catch e.p captures, so...
 			capture_flag = true;
@@ -381,33 +400,33 @@ const board_prototype = {
 
 		// Update castling...
 
-		if (source_piece === "K" && y1 === 7) {
+		if (source_piece === K && y1 === 7) {
 			ret.__delete_white_castling();
 		}
 
-		if (source_piece === "k" && y1 === 0) {
+		if (source_piece === k && y1 === 0) {
 			ret.__delete_black_castling();
 		}
 
-		if (source_piece === "R" && y1 === 7) {
+		if (source_piece === R && y1 === 7) {
 			ret.__delete_castling_char(source[0].toUpperCase());
 		}
 
-		if (source_piece === "r" && y1 === 0) {
+		if (source_piece === r && y1 === 0) {
 			ret.__delete_castling_char(source[0]);
 		}
 
-		if (target_piece === "R" && y2 === 7) {
+		if (target_piece === R && y2 === 7) {
 			ret.__delete_castling_char(target[0].toUpperCase());
 		}
 
-		if (target_piece === "r" && y2 === 0) {
+		if (target_piece === r && y2 === 0) {
 			ret.__delete_castling_char(target[0]);
 		}
 
 		// Update move counters...
 
-		if (this.active === "b") {
+		if (this.active === BLACK) {
 			ret.fullmove++;
 		}
 
@@ -420,8 +439,8 @@ const board_prototype = {
 		// Handle the moves of castling...
 
 		if (castle_flag) {
-			ret.set("", x1, y1);
-			ret.set("", x2, y2);
+			ret.set(0, x1, y1);
+			ret.set(0, x2, y2);
 			if (x2 > x1) {
 				ret.set(source_piece, 6, y1);
 				ret.set(target_piece, 5, y1);
@@ -433,8 +452,8 @@ const board_prototype = {
 
 		// Delete e.p. captured pawn...
 
-		if (pawn_flag && capture_flag && target_piece === "") {
-			ret.set("", x2, y1);
+		if (pawn_flag && capture_flag && target_piece === 0) {
+			ret.set(0, x2, y1);
 		}
 
 		// Set the enpassant square... only if potential capturing pawns are present.
@@ -442,13 +461,13 @@ const board_prototype = {
 		ret.enpassant = null;
 
 		if (pawn_flag && y1 === 6 && y2 === 4) {		// White pawn advanced 2
-			if ((x1 > 0 && ret.xy_get(x1 - 1, 4) === "p") || (x1 < 7 && ret.xy_get(x1 + 1, 4) === "p")) {
+			if ((x1 > 0 && ret.xy_get(x1 - 1, 4) === p) || (x1 < 7 && ret.xy_get(x1 + 1, 4) === p)) {
 				ret.enpassant = xy_to_i(x1, 5);
 			}
 		}
 
 		if (pawn_flag && y1 === 1 && y2 === 3) {		// Black pawn advanced 2
-			if ((x1 > 0 && ret.xy_get(x1 - 1, 3) === "P") || (x1 < 7 && ret.xy_get(x1 + 1, 3) === "P")) {
+			if ((x1 > 0 && ret.xy_get(x1 - 1, 3) === P) || (x1 < 7 && ret.xy_get(x1 + 1, 3) === P)) {
 				ret.enpassant = xy_to_i(x1, 2);
 			}
 		}
@@ -457,17 +476,17 @@ const board_prototype = {
 
 		if (!castle_flag) {
 			ret.set(ret.xy_get(x1, y1), x2, y2);
-			ret.set("", x1, y1);
+			ret.set(0, x1, y1);
 		}
 
 		// Handle promotions...
 
 		if (y2 === 0 && pawn_flag) {
-			ret.set(s[4].toUpperCase(), x2, y2);		// Will throw if s.length === 4, that's fine.
+			ret.set(lookups[s[4].toUpperCase()], x2, y2);		// Will throw if s.length === 4, that's fine.
 		}
 
 		if (y2 === 7 && pawn_flag) {
-			ret.set(s[4].toLowerCase(), x2, y2);
+			ret.set(lookups[s[4].toLowerCase()], x2, y2);
 		}
 
 		// Swap active...
@@ -550,11 +569,11 @@ const board_prototype = {
 
 		let piece = this.state[i];
 
-		if (piece === "P" || piece === "p") {
+		if (piece === P || piece === p) {
 			return this.__pseudolegal_pawn_moves(i);
 		} else {
 			let ret = this.__pseudolegal_piece_moves(i);
-			if (piece === "K" || piece === "k") {
+			if (piece === K || piece === k) {
 				ret = ret.concat(this.__pseudolegal_castling(i));
 			}
 			return ret;
@@ -569,18 +588,18 @@ const board_prototype = {
 		let piece = this.state[i];
 		let initial_mail = mailbox64[i];
 
-		let push         = (piece === "P") ? white_p_push : black_p_push;
-		let attack_array = (piece === "P") ? white_p_caps : black_p_caps;
+		let push         = (piece === P) ? white_p_push : black_p_push;
+		let attack_array = (piece === P) ? white_p_caps : black_p_caps;
 
-		let will_promote    = (piece === "P" && i <= 15) || (piece === "p" && i >= 48);
-		let can_double_push = (piece === "P" && i >= 48) || (piece === "p" && i <= 15);
+		let will_promote    = (piece === P && i <= 15) || (piece === p && i >= 48);
+		let can_double_push = (piece === P && i >= 48) || (piece === p && i <= 15);
 
 		// Pushes...
 
 		let mail = initial_mail + push;
 		let sq_index = mailbox[mail];				// We don't really need mailbox shennanigans, but use it for consistency.
 		let sq_piece = this.state[sq_index];
-		if (sq_piece === "") {
+		if (sq_piece === 0) {
 			if (will_promote) {
 				ret.push(i_to_s(i) + i_to_s(sq_index) + "q");
 				ret.push(i_to_s(i) + i_to_s(sq_index) + "r");
@@ -592,7 +611,7 @@ const board_prototype = {
 					mail += push;
 					sq_index = mailbox[mail];
 					sq_piece = this.state[sq_index];
-					if (sq_piece === "") {
+					if (sq_piece === 0) {
 						ret.push(i_to_s(i) + i_to_s(sq_index));
 					}
 				}
@@ -641,11 +660,11 @@ const board_prototype = {
 		let fast_break;
 
 		switch (piece) {
-			case "K": case "k":  attack_array =   king_attacks;  fast_break =  true;  break;
-			case "Q": case "q":  attack_array =  queen_attacks;  fast_break = false;  break;
-			case "R": case "r":  attack_array =   rook_attacks;  fast_break = false;  break;
-			case "B": case "b":  attack_array = bishop_attacks;  fast_break = false;  break;
-			case "N": case "n":  attack_array = knight_attacks;  fast_break =  true;  break;
+			case K: case k:  attack_array =   king_attacks;  fast_break =  true;  break;
+			case Q: case q:  attack_array =  queen_attacks;  fast_break = false;  break;
+			case R: case r:  attack_array =   rook_attacks;  fast_break = false;  break;
+			case B: case b:  attack_array = bishop_attacks;  fast_break = false;  break;
+			case N: case n:  attack_array = knight_attacks;  fast_break =  true;  break;
 		}
 
 		for (let attack of attack_array) {
@@ -657,7 +676,7 @@ const board_prototype = {
 					break;
 				}
 				let sq_colour = this.colour(sq_index);
-				if (sq_colour === "") {										// Moving to empty
+				if (sq_colour === EMPTY) {									// Moving to empty
 					ret.push(i_to_s(i) + i_to_s(sq_index));
 					if (fast_break) {
 						break;
@@ -690,7 +709,7 @@ const board_prototype = {
 		let x1;									// king start x
 		let y1;									// king start y
 
-		if (this.active === "w") {
+		if (this.active === WHITE) {
 			[x1, y1] = i_to_xy(this.wk);
 		} else {
 			[x1, y1] = i_to_xy(this.bk);
@@ -759,7 +778,7 @@ const board_prototype = {
 
 		let ret = [];
 
-		if (this.active === "w") {
+		if (this.active === WHITE) {
 			for (let ch of this.castling) {
 				if ("A" <= ch && ch <= "H") {
 					ret.push(ch.charCodeAt(0) - 65);
@@ -786,10 +805,10 @@ const board_prototype = {
 
 	c960_castling_converter: function(s) {
 		// Given some move s, convert it to the new Chess 960 castling format if needed.
-		if (s === "e1g1" && this.xy_get(4, 7) === "K" && this.castling.includes("G") === false) return "e1h1";
-		if (s === "e1c1" && this.xy_get(4, 7) === "K" && this.castling.includes("C") === false) return "e1a1";
-		if (s === "e8g8" && this.xy_get(4, 0) === "k" && this.castling.includes("g") === false) return "e8h8";
-		if (s === "e8c8" && this.xy_get(4, 0) === "k" && this.castling.includes("c") === false) return "e8a8";
+		if (s === "e1g1" && this.xy_get(4, 7) === K && this.castling.includes("G") === false) return "e1h1";
+		if (s === "e1c1" && this.xy_get(4, 7) === K && this.castling.includes("C") === false) return "e1a1";
+		if (s === "e8g8" && this.xy_get(4, 0) === k && this.castling.includes("g") === false) return "e8h8";
+		if (s === "e8c8" && this.xy_get(4, 0) === k && this.castling.includes("c") === false) return "e8a8";
 		return s;
 	},
 
@@ -997,7 +1016,7 @@ const board_prototype = {
 	},
 
 	next_number_string: function() {
-		return (this.active === "w") ? `${this.fullmove}.` : `${this.fullmove}...`;
+		return (this.active === WHITE) ? `${this.fullmove}.` : `${this.fullmove}...`;
 	},
 
 	parse_pgn: function(s) {		// Returns a UCI move and an error message.
@@ -1172,7 +1191,7 @@ const board_prototype = {
 			return "";
 		}
 
-		let [x1, y1] = (this.active === "w") ? i_to_xy(this.wk) : i_to_xy(this.bk);
+		let [x1, y1] = (this.active === WHITE) ? i_to_xy(this.wk) : i_to_xy(this.bk);
 
 		for (let tar_col of target_columns) {
 			if ((queenside && tar_col < x1) || (!queenside && tar_col > x1)) {
@@ -1314,7 +1333,7 @@ exports.new_board_from_fen = function(fen) {
 			}
 
 			if (["K", "k", "Q", "q", "R", "r", "B", "b", "N", "n", "P", "p"].includes(c)) {
-				ret.set(c, x, y);
+				ret.set(lookups[c], x, y);
 				x++;
 				if (c === "K") white_kings++;
 				if (c === "k") black_kings++;
@@ -1325,10 +1344,7 @@ exports.new_board_from_fen = function(fen) {
 		}
 	}
 
-	ret.active = tokens[1].toLowerCase();
-	if (ret.active !== "w" && ret.active !== "b") {
-		throw new Error(`Invalid FEN - active player was ${tokens[1]}`);
-	}
+	ret.active = tokens[1].toLowerCase() === "b" ? BLACK : WHITE;
 	
 	ret.halfmove = parseInt(tokens[4], 10);
 	if (Number.isNaN(ret.halfmove)) {
@@ -1369,35 +1385,35 @@ function castling_rights(board, s) {						// s is the castling string from a FEN
 
 		for (let ch of s) {
 			if (["A", "B", "C", "D", "E", "F", "G", "H"].includes(ch)) {
-				if (board.get(ch.toLowerCase() + "1") === "R") {
+				if (board.get(ch.toLowerCase() + "1") === R) {
 					dict[ch] = true;
 				}
 			}
 			if (ch === "Q") {
-				if (board.get("a1") === "R") {				// Compatibility with regular Chess FEN.
+				if (board.get("a1") === R) {				// Compatibility with regular Chess FEN.
 					dict.A = true;
 				} else {
 					for (let col of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
 						let piece = board.get(col + "1");
-						if (piece === "K") {				// Found the king before a rook, so there won't be queenside castling.
+						if (piece === K) {					// Found the king before a rook, so there won't be queenside castling.
 							break;
 						}
-						if (piece === "R") {
+						if (piece === R) {
 							dict[col.toUpperCase()] = true;
 						}
 					}	
 				}
 			}
 			if (ch === "K") {
-				if (board.get("h1") === "R") {				// Compatibility with regular Chess FEN.
+				if (board.get("h1") === R) {				// Compatibility with regular Chess FEN.
 					dict.H = true;
 				} else {
 					for (let col of ["h", "g", "f", "e", "d", "c", "b", "a"]) {		// Note reverse order...
 						let piece = board.get(col + "1");
-						if (piece === "K") {				// Found the king before a rook, so there won't be kingside castling.
+						if (piece === K) {					// Found the king before a rook, so there won't be kingside castling.
 							break;
 						}
-						if (piece === "R") {
+						if (piece === R) {
 							dict[col.toUpperCase()] = true;
 						}
 					}	
@@ -1414,35 +1430,35 @@ function castling_rights(board, s) {						// s is the castling string from a FEN
 
 		for (let ch of s) {
 			if (["a", "b", "c", "d", "e", "f", "g", "h"].includes(ch)) {
-				if (board.get(ch + "8") === "r") {
+				if (board.get(ch + "8") === r) {
 					dict[ch] = true;
 				}
 			}
 			if (ch === "q") {
-				if (board.get("a8") === "r") {
+				if (board.get("a8") === r) {
 					dict.a = true;
 				} else {
 					for (let col of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
 						let piece = board.get(col + "8");
-						if (piece === "k") {
+						if (piece === k) {
 							break;
 						}
-						if (piece === "r") {
+						if (piece === r) {
 							dict[col] = true;
 						}
 					}	
 				}
 			}
 			if (ch === "k") {
-				if (board.get("h8") === "r") {
+				if (board.get("h8") === r) {
 					dict.h = true;
 				} else {
 					for (let col of ["h", "g", "f", "e", "d", "c", "b", "a"]) {
 						let piece = board.get(col + "8");
-						if (piece === "k") {
+						if (piece === k) {
 							break;
 						}
-						if (piece === "r") {
+						if (piece === r) {
 							dict[col] = true;
 						}
 					}	
@@ -1466,17 +1482,17 @@ function castling_rights(board, s) {						// s is the castling string from a FEN
 }
 
 function fen_passant_square(board, s) {
-	if (board.active === "w" && ["a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6"].includes(s)) {
+	if (board.active === WHITE && ["a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6"].includes(s)) {
 		let col = s.charCodeAt(0) - 97;
-		if (board.get(col, 3) !== "p") return null;								// Check capturable pawn exists.
-		if (col > 0 && board.get(col - 1, 3) === "P") return s_to_i(s);			// Then check 2 ways a capturing
-		if (col < 7 && board.get(col + 1, 3) === "P") return s_to_i(s);			// pawn could exist.
+		if (board.get(col, 3) !== p) return null;								// Check capturable pawn exists.
+		if (col > 0 && board.get(col - 1, 3) === P) return s_to_i(s);			// Then check 2 ways a capturing
+		if (col < 7 && board.get(col + 1, 3) === P) return s_to_i(s);			// pawn could exist.
 	}
-	if (board.active === "b" && ["a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3"].includes(s)) {
+	if (board.active === BLACK && ["a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3"].includes(s)) {
 		let col = s.charCodeAt(0) - 97;
-		if (board.get(col, 4) !== "P") return null;
-		if (col > 0 && board.get(col - 1, 4) === "p") return s_to_i(s);
-		if (col < 7 && board.get(col + 1, 4) === "p") return s_to_i(s);
+		if (board.get(col, 4) !== P) return null;
+		if (col > 0 && board.get(col - 1, 4) === p) return s_to_i(s);
+		if (col < 7 && board.get(col + 1, 4) === p) return s_to_i(s);
 	}
 	return null;
 }
@@ -1488,12 +1504,12 @@ function is_normal_chess(board) {
 		}
 	}
 	if (board.castling.includes("A") || board.castling.includes("H")) {
-		if (board.get("e1") !== "K") {
+		if (board.get("e1") !== K) {
 			return false;
 		}
 	}
 	if (board.castling.includes("a") || board.castling.includes("h")) {
-		if (board.get("e8") !== "k") {
+		if (board.get("e8") !== k) {
 			return false;
 		}
 	}
