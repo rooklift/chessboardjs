@@ -202,6 +202,8 @@ const board_prototype = {
 		// Search range is INCLUSIVE. Result returned as a list of indices.
 		// You can call this function with just a piece to search the whole board.
 
+		if (typeof(piece) === "string") piece = lookups[piece];
+
 		if (startx === undefined) startx = 0; if (starty === undefined) starty = 0;
 		if (  endx === undefined)   endx = 7; if (  endy === undefined)   endy = 7;
 
