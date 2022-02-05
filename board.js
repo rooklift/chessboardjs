@@ -859,6 +859,8 @@ const board_prototype = {
 		return "";
 	},
 
+	// FIXME:
+
 	nice_string: function(s) {
 
 		// Given some raw (but valid) UCI move string, return a nice human-readable string
@@ -1002,9 +1004,9 @@ const board_prototype = {
 
 			switch (this.state[i]) {
 
-			case "Q": case "q": case "R": case "r": case "P": case "p":
+			case Q: case q: case R: case r: case P: case p:
 				return false;
-			case "B": case "b": case "N": case "n":
+			case B: case b: case N: case n:
 				minors++;
 				if (minors >= 2) {
 					return false;
@@ -1018,6 +1020,8 @@ const board_prototype = {
 	next_number_string: function() {
 		return (this.active === WHITE) ? `${this.fullmove}.` : `${this.fullmove}...`;
 	},
+
+	// FIXME:
 
 	parse_pgn: function(s) {		// Returns a UCI move and an error message.
 
