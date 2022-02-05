@@ -74,6 +74,10 @@ const n = -5
 const p = -6
 
 const lookups = {K, Q, R, B, N, P, k, q, r, b, n, p};
+const reverse = {};
+for (let [key, val] of Object.entries(lookups)) {
+	reverse[val] = key;
+}
 
 const WHITE =  1
 const EMPTY =  0
@@ -173,7 +177,7 @@ const board_prototype = {
 		for (let y = 0; y < 8; y++) {
 			units.push("\n");
 			for (let x = 0; x < 8; x++) {
-				units.push(this.get(x, y) === "" ? "." : this.get(x, y));
+				units.push(this.get(x, y) === 0 ? "." : reverse[this.get(x, y)]);
 				if (x < 7) {
 					units.push(" ");
 				}
@@ -324,7 +328,7 @@ const board_prototype = {
 					s += blanks.toString();
 					blanks = 0;
 				}
-				s += this.state[i];
+				s += reverse[this.state[i]];
 			}
 			if (i % 8 === 7) {
 				if (blanks > 0) {
@@ -337,6 +341,7 @@ const board_prototype = {
 			}
 		}
 
+		let active_string = this.active === WHITE ? "w" : "b";
 		let ep_string = this.enpassant ? i_to_s(this.enpassant) : "-";
 		let castling_string = this.castling !== "" ? this.castling : "-";
 
@@ -356,9 +361,9 @@ const board_prototype = {
 		// We can also return a string without move numbers, for book purposes.
 
 		if (book_flag) {
-			return s + ` ${this.active} ${castling_string} ${ep_string}`;
+			return s + ` ${active_string} ${castling_string} ${ep_string}`;
 		} else {
-			return s + ` ${this.active} ${castling_string} ${ep_string} ${this.halfmove} ${this.fullmove}`;
+			return s + ` ${active_string} ${castling_string} ${ep_string} ${this.halfmove} ${this.fullmove}`;
 		}
 	},
 
@@ -491,7 +496,7 @@ const board_prototype = {
 
 		// Swap active...
 
-		ret.active = this.inactive();
+		ret.active *= -1;
 		return ret;
 	},
 
@@ -859,8 +864,6 @@ const board_prototype = {
 		return "";
 	},
 
-	// FIXME:
-
 	nice_string: function(s) {
 
 		// Given some raw (but valid) UCI move string, return a nice human-readable string
@@ -883,7 +886,7 @@ const board_prototype = {
 		let piece = this.get(source);
 		let tar_piece = this.get(target);
 
-		if (piece === "") {
+		if (piece === 0) {
 			return "??";
 		}
 
@@ -901,9 +904,9 @@ const board_prototype = {
 			}
 		}
 
-		if (["K", "k", "Q", "q", "R", "r", "B", "b", "N", "n"].includes(piece)) {
+		if ([K, k, Q, q, R, r, B, b, N, n].includes(piece)) {
 
-			if ((piece === "K" && tar_piece === "R") || (piece === "k" && tar_piece === "r")) {
+			if ((piece === K && tar_piece === R) || (piece === k && tar_piece === r)) {
 				if (x1 < x2) {
 					return "O-O" + check;
 				} else {
@@ -932,10 +935,10 @@ const board_prototype = {
 
 				// Full disambiguation. This isn't always needed but meh.
 
-				if (tar_piece === "") {
-					return piece.toUpperCase() + source + target + check;
+				if (tar_piece === 0) {
+					return reverse[piece].toUpperCase() + source + target + check;
 				} else {
-					return piece.toUpperCase() + source + "x" + target + check;
+					return reverse[piece].toUpperCase() + source + "x" + target + check;
 				}
 			}
 
@@ -954,19 +957,19 @@ const board_prototype = {
 					disambiguator = source[0];			// Note source (the true source), not source1
 				}
 
-				if (tar_piece === "") {
-					return piece.toUpperCase() + disambiguator + target + check;
+				if (tar_piece === 0) {
+					return reverse[piece].toUpperCase() + disambiguator + target + check;
 				} else {
-					return piece.toUpperCase() + disambiguator + "x" + target + check;
+					return reverse[piece].toUpperCase() + disambiguator + "x" + target + check;
 				}
 			}
 
 			// No disambiguation.
 
-			if (tar_piece === "") {
-				return piece.toUpperCase() + target + check;
+			if (tar_piece === 0) {
+				return reverse[piece].toUpperCase() + target + check;
 			} else {
-				return piece.toUpperCase() + "x" + target + check;
+				return reverse[piece].toUpperCase() + "x" + target + check;
 			}
 		}
 
@@ -1020,8 +1023,6 @@ const board_prototype = {
 	next_number_string: function() {
 		return (this.active === WHITE) ? `${this.fullmove}.` : `${this.fullmove}...`;
 	},
-
-	// FIXME:
 
 	parse_pgn: function(s) {		// Returns a UCI move and an error message.
 
@@ -1150,7 +1151,7 @@ const board_prototype = {
 			}
 		}
 
-		let sources = this.find(piece, startx, starty, endx, endy);
+		let sources = this.find(lookups[piece], startx, starty, endx, endy);
 
 		if (sources.length === 0) {
 			return ["", "piece not found"];
