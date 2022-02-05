@@ -138,6 +138,11 @@ const board_prototype = {
 		return this.state[index_from_args(arg1, arg2)];
 	},
 
+	getchar: function(arg1, arg2) {
+		let piece = this.state[index_from_args(arg1, arg2)];
+		return piece === 0 ? "" : reverse[piece];
+	},
+
 	xy_get: function(x, y) {										// For optimisation (does increase perft by a few %)
 		return this.state[xy_to_i(x, y)];
 	},
@@ -177,7 +182,7 @@ const board_prototype = {
 		for (let y = 0; y < 8; y++) {
 			units.push("\n");
 			for (let x = 0; x < 8; x++) {
-				units.push(this.get(x, y) === 0 ? "." : reverse[this.get(x, y)]);
+				units.push(this.get(x, y) === 0 ? "." : this.getchar(x, y));
 				if (x < 7) {
 					units.push(" ");
 				}
@@ -328,7 +333,7 @@ const board_prototype = {
 					s += blanks.toString();
 					blanks = 0;
 				}
-				s += reverse[this.state[i]];
+				s += this.getchar(i);
 			}
 			if (i % 8 === 7) {
 				if (blanks > 0) {
