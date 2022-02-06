@@ -1069,12 +1069,12 @@ const board_prototype = {
 
 		// Now this works...
 
-		let piece = s[0];
+		let piece_char = s[0];
 
 		// We care about the colour of the piece, so make black pieces lowercase...
 
 		if (this.active === "b") {
-			piece = piece.toLowerCase();
+			piece_char = piece_char.toLowerCase();
 		}
 
 		// The last 2 characters specify the target point. We've removed all trailing
@@ -1108,14 +1108,14 @@ const board_prototype = {
 
 		// If it's a pawn and hasn't been disambiguated then it is moving forwards...
 
-		if (piece === "P" || piece === "p") {
+		if (piece_char === "P" || piece_char === "p") {
 			if (disambig.length === 0) {
 				startx = s_to_xy(dest)[0];
 				endx = startx;
 			}
 		}
 
-		let sources = this.find(piece, startx, starty, endx, endy);
+		let sources = this.find(piece_char, startx, starty, endx, endy);
 
 		if (sources.length === 0) {
 			return ["", "piece not found"];
