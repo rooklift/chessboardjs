@@ -425,22 +425,6 @@ const board_prototype = {
 			ret.set(0, x2, y1);
 		}
 
-		// Set the enpassant square... only if potential capturing pawns are present.
-
-		ret.enpassant = null;
-
-		if (pawn_flag && y1 === 6 && y2 === 4) {		// White pawn advanced 2
-			if ((x1 > 0 && ret.xy_get(x1 - 1, 4) === p) || (x1 < 7 && ret.xy_get(x1 + 1, 4) === p)) {
-				ret.enpassant = xy_to_i(x1, 5);
-			}
-		}
-
-		if (pawn_flag && y1 === 1 && y2 === 3) {		// Black pawn advanced 2
-			if ((x1 > 0 && ret.xy_get(x1 - 1, 3) === P) || (x1 < 7 && ret.xy_get(x1 + 1, 3) === P)) {
-				ret.enpassant = xy_to_i(x1, 2);
-			}
-		}
-
 		// Actually make the move (except we already did castling)...
 
 		if (!castle_flag) {
@@ -461,7 +445,80 @@ const board_prototype = {
 		// Swap active...
 
 		ret.active = this.inactive();
+
+		// Set the enpassant square... only if legal capture will exist.
+		// Must do this after setting .active because __set_enpassant() relies on it.
+
+		if (pawn_flag && y1 === 6 && y2 === 4) {			// White pawn advanced 2
+			ret.__set_enpassant(xy_to_i(x1, 5));
+		} else if (pawn_flag && y1 === 1 && y2 === 3) {		// Black pawn advanced 2
+			ret.__set_enpassant(xy_to_i(x1, 2));
+		} else {
+			ret.enpassant = null;
+		}
+
 		return ret;
+	},
+
+	__set_enpassant(index) {
+
+		// Helper method called only when a newly created board is almost finalised.
+		// Sets the e.p. square only if there is a legal e.p. capture.
+		//
+		// Expects this.active to be correct.
+
+		this.enpassant = null;
+
+		if (index === null) {
+			return;
+		}
+
+		if (typeof(index) === "string") {
+			if (valid_coord(index)) {
+				index = s_to_i(index);
+			} else {
+				return;
+			}
+		}
+
+		let sources = [];
+
+		if (this.active === WHITE && index >= 16 && index <= 23) {
+			let ep_mail = mailbox64[index];
+			for (let attack of black_p_caps) {			// Black because we're working backwards from the capture square.
+				let source_mail = ep_mail + attack;
+				let source_i = mailbox[source_mail];
+				if (source_i === -1) {
+					continue;
+				}
+				if (this.state[source_i] === P) {
+					sources.push(source_i);
+				}
+			}
+		}
+
+		if (this.active === BLACK && index >= 40 && index <= 47) {
+			let ep_mail = mailbox64[index];
+			for (let attack of white_p_caps) {			// White because we're working backwards from the capture square.
+				let source_mail = ep_mail + attack;
+				let source_i = mailbox[source_mail];
+				if (source_i === -1) {
+					continue;
+				}
+				if (this.state[source_i] === p) {
+					sources.push(source_i);
+				}
+			}
+		}
+
+		for (let source of sources) {
+			let mv = i_to_s(source) + i_to_s(index);
+			let test = this.move(mv);					// Note that move() doesn't rely on this.enpassant being correct.
+			if (!test.__can_capture_king()) {
+				this.enpassant = index;					// We have proven that one e.p. capture will be legal, so we can do this.
+				return;
+			}
+		}
 	},
 
 	__delete_castling_char: function(delete_char) {
@@ -1358,7 +1415,7 @@ function load_fen(fen) {
 	// Some hard things. Do these in the right order!
 
 	ret.castling = castling_rights(ret, tokens[2]);
-	ret.enpassant = fen_passant_square(ret, tokens[3]);		// Requires ret.active to be correct.
+	ret.__set_enpassant(tokens[3]);							// Requires ret.active to be correct.
 	ret.normalchess = is_normal_chess(ret);					// Requires ret.castling to be correct.
 
 	return ret;
@@ -1470,22 +1527,6 @@ function castling_rights(board, s) {						// s is the castling string from a FEN
 
 	// FIXME: check at most 1 castling possibility on left and right of each king?
 	// At the moment we support more arbitrary castling rights, maybe that's OK.
-}
-
-function fen_passant_square(board, s) {
-	if (board.active === WHITE && ["a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6"].includes(s)) {
-		let col = s.charCodeAt(0) - 97;
-		if (board.get(col, 3) !== p) return null;								// Check capturable pawn exists.
-		if (col > 0 && board.get(col - 1, 3) === P) return s_to_i(s);			// Then check 2 ways a capturing
-		if (col < 7 && board.get(col + 1, 3) === P) return s_to_i(s);			// pawn could exist.
-	}
-	if (board.active === BLACK && ["a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3"].includes(s)) {
-		let col = s.charCodeAt(0) - 97;
-		if (board.get(col, 4) !== P) return null;
-		if (col > 0 && board.get(col - 1, 4) === p) return s_to_i(s);
-		if (col < 7 && board.get(col + 1, 4) === p) return s_to_i(s);
-	}
-	return null;
 }
 
 function is_normal_chess(board) {
