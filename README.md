@@ -17,7 +17,7 @@ Surely fast enough for GUI use, though you likely don't want to build an engine 
 
 ```javascript
 
-const {new_board_from_fen} = require("./board");
+const {load_fen} = require("./board");
 
 let foo = load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
