@@ -24,7 +24,7 @@ let foo = load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 // Obtain a move from some source, e.g. engine / user input.
 
 let move = "e2e4";
-move = foo.c960_castling_converter(move);    // Always OK to do this.
+move = foo.c960_castling_converter(move);    // Always OK and wise to do this.
 
 if (!foo.illegal(move)) {                    // Note: returns a string (reason for illegality or "")
     foo = foo.move(move);
