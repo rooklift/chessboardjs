@@ -4,7 +4,7 @@ Surely fast enough for GUI use, though you likely don't want to build an engine 
 
 ## Usage notes:
 
-* Get a board with `new_board_from_fen()`
+* Get a board with `load_fen()`
 * Get new boards with `board.move()` - this has no legality checks!
 * So, check moves for illegality first with `board.illegal()`
 * Moves are expected to be in UCI format, e.g. `e2e4` and `e7e8q` etc, *except:*
@@ -19,7 +19,7 @@ Surely fast enough for GUI use, though you likely don't want to build an engine 
 
 const {new_board_from_fen} = require("./board");
 
-let foo = new_board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+let foo = load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
 // Obtain a move from some source, e.g. engine / user input.
 
