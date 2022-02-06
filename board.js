@@ -104,11 +104,11 @@ const board_prototype = {
 		return this.state[xy_to_i(x, y)];
 	},
 
-	set: function(c, arg1, arg2) {
+	set: function(piece, arg1, arg2) {
 		let index = index_from_args(arg1, arg2);
-		this.state[index] = c;
-		if (c === K) this.wk = index;
-		if (c === k) this.bk = index;
+		this.state[index] = piece;
+		if (piece === K) this.wk = index;
+		if (piece === k) this.bk = index;
 	},
 
 	colour: function(arg1, arg2) {
