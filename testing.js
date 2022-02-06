@@ -15,7 +15,7 @@ let perft_known_values = {
 exports.perft = function(fen, depth) {
 	if (!fen || !depth) throw "Need FEN and depth";
 	let starttime = new Date();
-	let board = boardjs.new_board_from_fen(fen);
+	let board = boardjs.load_fen(fen);
 	let val = perft_recurse(board, depth, true);
 	console.log(`Total.......... ${val} (${((new Date() - starttime) / 1000).toFixed(1)} seconds)`);
 	if (perft_known_values[fen] && perft_known_values[fen][depth]) {
@@ -78,7 +78,7 @@ exports.filetest = function(filename = "perft-marcel.epd") {
 		let fen = parts[0];
 		let d3 = parseFloat(parts[3].trim().split(" ")[1]);
 
-		let board = boardjs.new_board_from_fen(fen);
+		let board = boardjs.load_fen(fen);
 		let val = perft_recurse(board, 3, false);
 
 		if (val === d3) {
@@ -100,11 +100,11 @@ exports.filetest = function(filename = "perft-marcel.epd") {
 };
 
 exports.startpos = function() {
-	return boardjs.new_board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+	return boardjs.load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 };
 
 exports.random = function(ply = 100) {
-	let board = boardjs.new_board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+	let board = boardjs.load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 	let history = [];
 	for (let i = 0; i < ply; i++) {
 		let moves = board.movegen();
