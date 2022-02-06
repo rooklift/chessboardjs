@@ -1419,7 +1419,7 @@ function load_fen(fen) {
 	ret.normalchess = is_normal_chess(ret);					// Requires ret.castling to be correct.
 
 	return ret;
-};
+}
 
 function castling_rights(board, s) {						// s is the castling string from a FEN
 
