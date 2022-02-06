@@ -1,27 +1,5 @@
 "use strict";
 
-function index_from_args(arg1, arg2) {
-
-	// A few things can be called with a variety of arg types...
-
-	let type1 = typeof(arg1);
-	let type2 = typeof(arg2);
-
-	if (type1 === "string") {
-		let a = arg1.charCodeAt(0);
-		let b = arg1.charCodeAt(1);
-		return (a - 97) + ((56 - b) * 8);
-	} else if (type1 === "number" && type2 === "number") {
-		return arg1 + arg2 * 8;
-	} else if (type1 === "number" && type2 === "undefined") {
-		return arg1;
-	} else if (type1 === "object") {			// {x, y} objects, not actually used in this file.
-		return arg1.x + arg1.y * 8;
-	} else {
-		throw new Error(`index_from_args(${arg1}, ${arg2}): bad args`);
-	}
-}
-
 const mailbox = [
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -34,8 +12,7 @@ const mailbox = [
 	-1, 48, 49, 50, 51, 52, 53, 54, 55, -1,
 	-1, 56, 57, 58, 59, 60, 61, 62, 63, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-];
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1];
 
 const mailbox64 = [
 	21, 22, 23, 24, 25, 26, 27, 28,
@@ -45,43 +22,23 @@ const mailbox64 = [
 	61, 62, 63, 64, 65, 66, 67, 68,
 	71, 72, 73, 74, 75, 76, 77, 78,
 	81, 82, 83, 84, 85, 86, 87, 88,
-	91, 92, 93, 94, 95, 96, 97, 98,
-];
+	91, 92, 93, 94, 95, 96, 97, 98];
 
-const knight_attacks = [-21, -19, -12, -8, 8, 12, 19, 21];
-const rook_attacks = [-10, -1, 1, 10];
-const bishop_attacks = [-11, -9, 9, 11];
-const queen_attacks = rook_attacks.concat(bishop_attacks);
-const king_attacks = rook_attacks.concat(bishop_attacks);
+const knight_attacks = [-21, -19, -12,  -8,   8,  12,  19,  21];
+const rook_attacks   = [-10,  -1,   1,  10];
+const bishop_attacks = [-11,  -9,   9,  11];
+const royal_attacks  = [-11, -10,  -9,  -1,   1,   9,  10,  11];
+const white_p_caps   = [-11,  -9];
+const black_p_caps   = [  9,  11];
 
-const white_p_push = -10;
-const black_p_push = 10;
+const white_p_push = -10; const black_p_push = 10;
 
-const white_p_caps = [-11, -9];
-const black_p_caps = [9, 11];
+const [K, Q, R, B, N, P, k, q, r, b, n, p] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
-const K =  1
-const Q =  2
-const R =  3
-const B =  4
-const N =  5
-const P =  6
-const k = -1
-const q = -2
-const r = -3
-const b = -4
-const n = -5
-const p = -6
+const char_to_piece = {"": 0, "K": 1, "Q": 2, "R": 3, "B": 4, "N": 5, "P": 6, "k": 7, "q": 8, "r": 9, "b": 10, "n": 11, "p": 12};
+const piece_to_char = ["",    "K",    "Q",    "R",    "B",    "N",    "P",    "k",    "q",    "r",    "b",     "n",     "p"    ];
 
-const lookups = {K, Q, R, B, N, P, k, q, r, b, n, p};
-const reverse = {};
-for (let [key, val] of Object.entries(lookups)) {
-	reverse[val] = key;
-}
-
-const WHITE =  1
-const EMPTY =  0
-const BLACK = -1
+const [BLACK, EMPTY, WHITE] = [-1, 0, 1];
 
 // ------------------------------------------------------------------------------------------------
 
@@ -89,8 +46,8 @@ function new_board(state = null, active = WHITE, castling = "", enpassant = null
 
 	// Dangers:
 	//
-	// - Some functions -- new_board_from_fen() and move() -- are allowed to mutate things
-	//   while updating, which means they have a board which is invalid for some time.
+	// - Some functions -- load_fen() and move() -- are allowed to mutate things while
+	//   updating, which means they have a board which is invalid for some time.
 	//
 	// - wk and bk need to be kept in sync with state. Currently this is managed by only
 	//   ever adjusting state via set() which does that automatically.
@@ -140,7 +97,7 @@ const board_prototype = {
 
 	getchar: function(arg1, arg2) {
 		let piece = this.state[index_from_args(arg1, arg2)];
-		return piece === 0 ? "" : reverse[piece];
+		return piece_to_char[piece];
 	},
 
 	xy_get: function(x, y) {										// For optimisation (does increase perft by a few %)
@@ -158,7 +115,7 @@ const board_prototype = {
 		let piece = this.get(arg1, arg2);
 		if (piece === 0) {
 			return EMPTY;
-		} else if (piece > 0) {
+		} else if (piece <= 6) {
 			return WHITE;
 		} else {
 			return BLACK;
@@ -166,7 +123,7 @@ const board_prototype = {
 	},
 
 	inactive: function() {
-		return this.active * -1;
+		return this.active === WHITE ? BLACK : WHITE;
 	},
 
 	active_king_index() {
@@ -202,7 +159,7 @@ const board_prototype = {
 		// Search range is INCLUSIVE. Result returned as a list of indices.
 		// You can call this function with just a piece to search the whole board.
 
-		if (typeof(piece) === "string") piece = lookups[piece];
+		if (typeof(piece) === "string") piece = char_to_piece[piece];
 
 		if (startx === undefined) startx = 0; if (starty === undefined) starty = 0;
 		if (  endx === undefined)   endx = 7; if (  endy === undefined)   endy = 7;
@@ -494,16 +451,16 @@ const board_prototype = {
 		// Handle promotions...
 
 		if (y2 === 0 && pawn_flag) {
-			ret.set(lookups[s[4].toUpperCase()], x2, y2);		// Will throw if s.length === 4, that's fine.
+			ret.set(char_to_piece[s[4].toUpperCase()], x2, y2);		// Will throw if s.length === 4, that's fine.
 		}
 
 		if (y2 === 7 && pawn_flag) {
-			ret.set(lookups[s[4].toLowerCase()], x2, y2);
+			ret.set(char_to_piece[s[4].toLowerCase()], x2, y2);
 		}
 
 		// Swap active...
 
-		ret.active *= -1;
+		ret.active = this.inactive();
 		return ret;
 	},
 
@@ -643,7 +600,7 @@ const board_prototype = {
 
 			if (sq_index === this.enpassant) {							// This is a valid e.p. capture.
 				ret.push(i_to_s(i) + i_to_s(sq_index));
-			} else if (this.colour(sq_index) === this.inactive()) {		// Can't just test !== this.active, because the colour can be ""
+			} else if (this.colour(sq_index) === this.inactive()) {		// Can't just test !== this.active, because the colour can be EMPTY
 				if (will_promote) {
 					ret.push(i_to_s(i) + i_to_s(sq_index) + "q");
 					ret.push(i_to_s(i) + i_to_s(sq_index) + "r");
@@ -672,8 +629,8 @@ const board_prototype = {
 		let fast_break;
 
 		switch (piece) {
-			case K: case k:  attack_array =   king_attacks;  fast_break =  true;  break;
-			case Q: case q:  attack_array =  queen_attacks;  fast_break = false;  break;
+			case K: case k:  attack_array =  royal_attacks;  fast_break =  true;  break;
+			case Q: case q:  attack_array =  royal_attacks;  fast_break = false;  break;
 			case R: case r:  attack_array =   rook_attacks;  fast_break = false;  break;
 			case B: case b:  attack_array = bishop_attacks;  fast_break = false;  break;
 			case N: case n:  attack_array = knight_attacks;  fast_break =  true;  break;
@@ -943,9 +900,9 @@ const board_prototype = {
 				// Full disambiguation. This isn't always needed but meh.
 
 				if (tar_piece === 0) {
-					return reverse[piece].toUpperCase() + source + target + check;
+					return piece_to_char[piece].toUpperCase() + source + target + check;
 				} else {
-					return reverse[piece].toUpperCase() + source + "x" + target + check;
+					return piece_to_char[piece].toUpperCase() + source + "x" + target + check;
 				}
 			}
 
@@ -965,18 +922,18 @@ const board_prototype = {
 				}
 
 				if (tar_piece === 0) {
-					return reverse[piece].toUpperCase() + disambiguator + target + check;
+					return piece_to_char[piece].toUpperCase() + disambiguator + target + check;
 				} else {
-					return reverse[piece].toUpperCase() + disambiguator + "x" + target + check;
+					return piece_to_char[piece].toUpperCase() + disambiguator + "x" + target + check;
 				}
 			}
 
 			// No disambiguation.
 
 			if (tar_piece === 0) {
-				return reverse[piece].toUpperCase() + target + check;
+				return piece_to_char[piece].toUpperCase() + target + check;
 			} else {
-				return reverse[piece].toUpperCase() + "x" + target + check;
+				return piece_to_char[piece].toUpperCase() + "x" + target + check;
 			}
 		}
 
@@ -1158,7 +1115,7 @@ const board_prototype = {
 			}
 		}
 
-		let sources = this.find(lookups[piece], startx, starty, endx, endy);
+		let sources = this.find(piece, startx, starty, endx, endy);
 
 		if (sources.length === 0) {
 			return ["", "piece not found"];
@@ -1217,6 +1174,28 @@ const board_prototype = {
 };
 
 // ------------------------------------------------------------------------------------------------
+
+function index_from_args(arg1, arg2) {
+
+	// A few things can be called with a variety of arg types...
+
+	let type1 = typeof(arg1);
+	let type2 = typeof(arg2);
+
+	if (type1 === "string") {
+		let a = arg1.charCodeAt(0);
+		let b = arg1.charCodeAt(1);
+		return (a - 97) + ((56 - b) * 8);
+	} else if (type1 === "number" && type2 === "number") {
+		return arg1 + arg2 * 8;
+	} else if (type1 === "number" && type2 === "undefined") {
+		return arg1;
+	} else if (type1 === "object") {			// {x, y} objects, not actually used in this file.
+		return arg1.x + arg1.y * 8;
+	} else {
+		throw new Error(`index_from_args(${arg1}, ${arg2}): bad args`);
+	}
+}
 
 function s_to_xy(s) {
 	let x = s.charCodeAt(0) - 97;
@@ -1288,7 +1267,7 @@ function valid_coord(s) {
 
 // ------------------------------------------------------------------------------------------------
 
-exports.new_board_from_fen = function(fen) {
+function load_fen(fen) {
 
 	if (fen.length > 200) {
 		throw new Error(`Invalid FEN - length was ${fen.length}`);
@@ -1345,7 +1324,7 @@ exports.new_board_from_fen = function(fen) {
 			}
 
 			if (["K", "k", "Q", "q", "R", "r", "B", "b", "N", "n", "P", "p"].includes(c)) {
-				ret.set(lookups[c], x, y);
+				ret.set(char_to_piece[c], x, y);
 				x++;
 				if (c === "K") white_kings++;
 				if (c === "k") black_kings++;
@@ -1527,3 +1506,7 @@ function is_normal_chess(board) {
 	}
 	return true;
 }
+
+// ------------------------------------------------------------------------------------------------
+
+module.exports = {load_fen};
