@@ -33,7 +33,7 @@ const black_p_caps   = [  9,  11];
 
 const white_p_push = -10; const black_p_push = 10;
 
-const [K, Q, R, B, N, P, k, q, r, b, n, p] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+const [K, Q, R, B, N, P, k, q, r, b, n, p] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];	// Note .colour() depends on these values.
 
 const char_to_piece = {"": 0, "K": 1, "Q": 2, "R": 3, "B": 4, "N": 5, "P": 6, "k": 7, "q": 8, "r": 9, "b": 10, "n": 11, "p": 12};
 const piece_to_char = ["",    "K",    "Q",    "R",    "B",    "N",    "P",    "k",    "q",    "r",    "b",     "n",     "p"    ];
@@ -1509,4 +1509,10 @@ function is_normal_chess(board) {
 
 // ------------------------------------------------------------------------------------------------
 
-module.exports = {load_fen};
+module.exports = {
+	load_fen,
+	K, Q, R, B, N, P, k, q, r, b, n, p,
+	BLACK, EMPTY, WHITE,
+	char_to_piece,
+	piece_to_char,
+};
