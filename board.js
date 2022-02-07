@@ -343,14 +343,14 @@ const board_prototype = {
 		return true;
 	},
 
-	move: function(s) {
+	move: function(s, in_place = false) {
 
 		// s is some valid UCI move like "d1f3" or "e7e8q". For the most part, this function
 		// assumes the move is legal - all sorts of weird things can happen if this isn't so.
-
+		//
 		// Note castling must be given as king-to-rook e.g. e1h1
 
-		let ret = this.copy();
+		let ret = in_place ? this : this.copy();
 
 		let source = s.slice(0, 2);											// e.g. "e1"
 		let target = s.slice(2, 4);
@@ -447,12 +447,12 @@ const board_prototype = {
 		ret.active = ret.inactive();
 
 		// Set the enpassant square... only if legal capture will exist.
-		// Must do this after setting .active because __set_enpassant() relies on it.
+		// Must do this after setting .active because __maybe_set_enpassant() relies on it.
 
 		if (pawn_flag && y1 === 6 && y2 === 4) {			// White pawn advanced 2
-			ret.__set_enpassant(xy_to_i(x1, 5));
+			ret.__maybe_set_enpassant(xy_to_i(x1, 5));
 		} else if (pawn_flag && y1 === 1 && y2 === 3) {		// Black pawn advanced 2
-			ret.__set_enpassant(xy_to_i(x1, 2));
+			ret.__maybe_set_enpassant(xy_to_i(x1, 2));
 		} else {
 			ret.enpassant = null;
 		}
@@ -460,7 +460,7 @@ const board_prototype = {
 		return ret;
 	},
 
-	__set_enpassant(index) {
+	__maybe_set_enpassant(index) {
 
 		// Helper method called only when a newly created board is almost finalised.
 		// Sets the e.p. square only if there is a legal e.p. capture.
@@ -1415,10 +1415,14 @@ function load_fen(fen) {
 	// Some hard things. Do these in the right order!
 
 	ret.castling = castling_rights(ret, tokens[2]);
-	ret.__set_enpassant(tokens[3]);							// Requires ret.active to be correct.
+	ret.__maybe_set_enpassant(tokens[3]);					// Requires ret.active to be correct.
 	ret.normalchess = is_normal_chess(ret);					// Requires ret.castling to be correct.
 
 	return ret;
+}
+
+function startpos() {
+	return load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 }
 
 function castling_rights(board, s) {						// s is the castling string from a FEN
@@ -1551,7 +1555,7 @@ function is_normal_chess(board) {
 // ------------------------------------------------------------------------------------------------
 
 module.exports = {
-	load_fen,
+	load_fen, startpos,
 	K, Q, R, B, N, P, k, q, r, b, n, p,
 	BLACK, EMPTY, WHITE,
 	char_to_piece,
