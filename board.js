@@ -349,6 +349,7 @@ const board_prototype = {
 		// assumes the move is legal - all sorts of weird things can happen if this isn't so.
 		//
 		// Note castling must be given as king-to-rook e.g. e1h1
+		// Note in_place mode doesn't seem any faster than normal mode
 
 		let ret = in_place ? this : this.copy();
 
