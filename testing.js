@@ -99,10 +99,6 @@ exports.filetest = function(filename = "perft-marcel.epd") {
 	}
 };
 
-exports.startpos = function() {
-	return boardjs.load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-};
-
 exports.random = function(ply = 100) {
 	let board = boardjs.load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 	let history = [];
