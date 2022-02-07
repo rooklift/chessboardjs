@@ -350,14 +350,14 @@ const board_prototype = {
 
 		// Note castling must be given as king-to-rook e.g. e1h1
 
+		let ret = this.copy();
+
 		let source = s.slice(0, 2);											// e.g. "e1"
 		let target = s.slice(2, 4);
 		let [x1, y1] = s_to_xy(source);										// e.g. [4, 7]
 		let [x2, y2] = s_to_xy(target);
-		let source_piece = this.xy_get(x1, y1);
-		let target_piece = this.xy_get(x2, y2);
-
-		let ret = this.copy();
+		let source_piece = ret.xy_get(x1, y1);
+		let target_piece = ret.xy_get(x2, y2);
 
 		let pawn_flag = source_piece === P || source_piece === p;
 		let castle_flag = (source_piece === K && target_piece === R) || (source_piece === k && target_piece === r);
@@ -395,7 +395,7 @@ const board_prototype = {
 
 		// Update move counters...
 
-		if (this.active === BLACK) {
+		if (ret.active === BLACK) {
 			ret.fullmove++;
 		}
 
@@ -444,7 +444,7 @@ const board_prototype = {
 
 		// Swap active...
 
-		ret.active = this.inactive();
+		ret.active = ret.inactive();
 
 		// Set the enpassant square... only if legal capture will exist.
 		// Must do this after setting .active because __set_enpassant() relies on it.
