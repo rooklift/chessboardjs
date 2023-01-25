@@ -1230,14 +1230,13 @@ const board_prototype = {
 
 		if (good_cols.length === 0) {
 			return "";
-		} else if (good_cols.length === 1) {
-			return xy_to_s(x1, y1) + xy_to_s(good_cols[0], y1);
-		} else {
-			good_cols.sort((a, b) => {								// Find shortest castling move on this side.
-				return Math.abs(x1 - a) - Math.abs(x1 - b);
-			});
-			return xy_to_s(x1, y1) + xy_to_s(good_cols[0], y1);
 		}
+
+		good_cols.sort((a, b) => {								// Find shortest rights-permitted castling move on this side.
+			return Math.abs(x1 - a) - Math.abs(x1 - b);
+		});
+		
+		return xy_to_s(x1, y1) + xy_to_s(good_cols[0], y1);
 	},
 
 };
