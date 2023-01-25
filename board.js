@@ -1208,8 +1208,8 @@ const board_prototype = {
 
 	__propose_castling_move: function(queenside) {
 
-		// Tries to return a single castling move, based solely on
-		// king position and this.castling. Kingside by default.
+		// Tries to return a single castling move, based solely on king position and this.castling. Kingside by default.
+		// If multiple castling rights columns exist on the relevant side of the king, will return the closest castling move.
 		// Result is potentially completely illegal.
 
 		let target_columns = this.__castling_target_columns();
@@ -1220,13 +1220,24 @@ const board_prototype = {
 
 		let [x1, y1] = (this.active === WHITE) ? i_to_xy(this.wk) : i_to_xy(this.bk);
 
+		let good_cols = [];
+
 		for (let tar_col of target_columns) {
 			if ((queenside && tar_col < x1) || (!queenside && tar_col > x1)) {
-				return xy_to_s(x1, y1) + xy_to_s(tar_col, y1);
+				good_cols.push(tar_col);
 			}
 		}
 
-		return "";
+		if (good_cols.length === 0) {
+			return "";
+		} else if (good_cols.length === 1) {
+			return xy_to_s(x1, y1) + xy_to_s(good_cols[0], y1);
+		} else {
+			good_cols.sort((a, b) => {								// Find shortest castling move on this side.
+				return Math.abs(x1 - a) - Math.abs(x1 - b);
+			});
+			return xy_to_s(x1, y1) + xy_to_s(good_cols[0], y1);
+		}
 	},
 
 };
