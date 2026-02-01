@@ -1131,7 +1131,7 @@ const board_prototype = {
 
 		// We care about the colour of the piece, so make black pieces lowercase...
 
-		if (this.active === "b") {
+		if (this.active === BLACK) {
 			piece_char = piece_char.toLowerCase();
 		}
 

@@ -109,7 +109,7 @@ exports.random = function(ply = 100) {
 			break;
 		}
 		let mv = moves[Math.floor(moves.length * Math.random())];
-		if (board.active === "w") {
+		if (board.active === boardjs.WHITE) {
 			history.push(board.next_number_string() + " " + board.nice_string(mv));
 		} else {
 			history.push(board.nice_string(mv));
